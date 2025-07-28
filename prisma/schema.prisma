@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String
+  firstName String?
+  lastName  String?
+  password  String
+  role      UserRole   @default(TEACHER)
+  status    UserStatus @default(PENDING)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  groups    Group[]
+  sessions  Session[]
+  students  Student[]
+
+  @@map("users")
+}
+
+model Student {
+  id             String         @id @default(cuid())
+  teacherId      String
+  name           String
+  email          String?
+  phone          String
+  classe         String
+  lycee          String
+  level          String?
+  enrollmentDate DateTime?
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  attendance     Attendance[]
+  groups         GroupStudent[]
+  payments       Payment[]
+  teacher        User           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@map("students")
+}
+
+model Group {
+  id                String         @id @default(cuid())
+  name              String
+  subject           String
+  teacherId         String
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  scheduleDay       String?
+  scheduleTime      String?
+  scheduleDuration  Int?
+  weeklySchedule    Json?
+  monthlyFee        Float?
+  paymentDeadline   Int?           @default(5)
+  sessionFee        Float?
+  paymentThreshold  Int?
+  registrationFee   Float?
+  semesterStartDate DateTime?
+  semesterEndDate   DateTime?
+  students          GroupStudent[]
+  teacher           User           @relation(fields: [teacherId], references: [id])
+  payments          Payment[]
+  sessions          Session[]
+
+  @@map("groups")
+}
+
+model GroupStudent {
+  id        String    @id @default(cuid())
+  groupId   String
+  studentId String
+  teacherId String
+  joinedAt  DateTime  @default(now())
+  leftAt    DateTime?
+  isActive  Boolean   @default(true)
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, studentId])
+  @@map("group_students")
+}
+
+model Session {
+  id         String        @id @default(cuid())
+  groupId    String
+  teacherId  String
+  date       DateTime
+  duration   Int
+  status     SessionStatus @default(SCHEDULED)
+  notes      String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  attendance Attendance[]
+  group      Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  teacher    User          @relation(fields: [teacherId], references: [id])
+
+  @@map("sessions")
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  sessionId String
+  studentId String
+  teacherId String
+  status    AttendanceStatus @default(PRESENT)
+  notes     String?
+  createdAt DateTime         @default(now())
+  session   Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@map("attendance")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  studentId     String
+  groupId       String
+  teacherId     String
+  amount        Float
+  type          PaymentType
+  status        PaymentStatus @default(PENDING)
+  dueDate       DateTime
+  paidDate      DateTime?
+  paymentMethod String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  group         Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum PaymentType {
+  MONTHLY_FEE
+  SESSION_FEE
+  REGISTRATION_FEE
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
