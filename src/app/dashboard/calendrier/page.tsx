@@ -107,45 +107,46 @@ export default function CalendrierPage() {
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null)
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null)
 
   // Fetch data from API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        setError(null)
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-        // Fetch sessions and groups
-        const [sessionsResponse, groupsResponse] = await Promise.all([
-          fetch('/api/sessions'),
-          fetch('/api/groups')
-        ])
+      // Fetch sessions and groups
+      const [sessionsResponse, groupsResponse] = await Promise.all([
+        fetch('/api/sessions'),
+        fetch('/api/groups')
+      ])
 
-        if (!sessionsResponse.ok || !groupsResponse.ok) {
-          // Clear data when authentication fails or other errors occur
-          setSessions([])
-          setGroups([])
-          throw new Error('Failed to fetch data')
-        }
-
-        const [sessionsData, groupsData] = await Promise.all([
-          sessionsResponse.json(),
-          groupsResponse.json()
-        ])
-
-        setSessions(sessionsData)
-        setGroups(groupsData)
-      } catch (err) {
-        console.error('Error fetching calendar data:', err)
-        // Ensure data is cleared on any error
+      if (!sessionsResponse.ok || !groupsResponse.ok) {
+        // Clear data when authentication fails or other errors occur
         setSessions([])
         setGroups([])
-        setError('Failed to load calendar data')
-      } finally {
-        setLoading(false)
+        throw new Error('Failed to fetch data')
       }
-    }
 
+      const [sessionsData, groupsData] = await Promise.all([
+        sessionsResponse.json(),
+        groupsResponse.json()
+      ])
+
+      setSessions(sessionsData)
+      setGroups(groupsData)
+    } catch (err) {
+      console.error('Error fetching calendar data:', err)
+      // Ensure data is cleared on any error
+      setSessions([])
+      setGroups([])
+      setError('Failed to load calendar data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchData()
   }, [])
 
@@ -378,6 +379,22 @@ export default function CalendrierPage() {
                     </Button>
                   </div>
                 </div>
+                
+                {/* Status Legend */}
+                <div className="flex flex-wrap gap-4 mt-4 text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-green-100 border-l-2 border-green-500 rounded-sm flex items-center justify-center text-[8px] text-green-800">✓</div>
+                    <span className="text-gray-600">Présence enregistrée</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-blue-100 border-l-2 border-blue-500 rounded-sm flex items-center justify-center text-[8px] text-blue-800">○</div>
+                    <span className="text-gray-600">Programmé</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-orange-100 border-l-2 border-orange-500 rounded-sm flex items-center justify-center text-[8px] text-orange-800">!</div>
+                    <span className="text-gray-600">Présence manquante</span>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {/* Days of week header */}
@@ -416,18 +433,37 @@ export default function CalendrierPage() {
                       {/* Session indicators */}
                       <div className="space-y-1">
                         {day.sessions.slice(0, 2).map((session, sessionIndex) => {
+                          const hasAttendance = session.attendance && session.attendance.length > 0;
+                          const isPastDate = new Date(session.date) < new Date(new Date().setHours(0, 0, 0, 0));
+                          
+                          let statusColor = '';
+                          let statusIcon = '';
+                          
+                          if (session.status === 'COMPLETED' && hasAttendance) {
+                            statusColor = 'bg-green-100 text-green-800 border-l-4 border-green-500';
+                            statusIcon = '✓';
+                          } else if (session.status === 'SCHEDULED' && !isPastDate) {
+                            statusColor = 'bg-blue-100 text-blue-800 border-l-4 border-blue-500';
+                            statusIcon = '○';
+                          } else if (isPastDate && !hasAttendance) {
+                            statusColor = 'bg-orange-100 text-orange-800 border-l-4 border-orange-500';
+                            statusIcon = '!';
+                          } else {
+                            statusColor = 'bg-gray-100 text-gray-800 border-l-4 border-gray-500';
+                            statusIcon = '○';
+                          }
+                          
                           return (
                             <div
                               key={sessionIndex}
                               className={`
-                                text-xs px-1 py-0.5 rounded truncate
-                                ${session.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                  session.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
-                                  'bg-red-100 text-red-800'}
+                                text-xs px-1 py-0.5 rounded truncate flex items-center gap-1
+                                ${statusColor}
                               `}
-                              title={`${session.group.name} - ${getFirstScheduleTime(session.group.weeklySchedule) || session.group.scheduleTime || 'N/A'}`}
+                              title={`${session.group.name} - ${getFirstScheduleTime(session.group.weeklySchedule) || session.group.scheduleTime || 'N/A'} - ${hasAttendance ? 'Présence enregistrée' : isPastDate ? 'Présence manquante' : 'Programmé'}`}
                             >
-                              {session.group.name}
+                              <span className="text-[10px]">{statusIcon}</span>
+                              <span className="truncate">{session.group.name}</span>
                             </div>
                           )
                         })}
@@ -560,6 +596,7 @@ export default function CalendrierPage() {
                                     if (response.ok) {
                                       const fullGroup = await response.json()
                                       setSelectedGroup(fullGroup)
+                                      setSelectedSession(session)
                                       setIsAttendanceModalOpen(true)
                                     }
                                   } catch (error) {
@@ -642,10 +679,13 @@ export default function CalendrierPage() {
           onClose={() => {
             setIsAttendanceModalOpen(false)
             setSelectedGroup(null)
+            setSelectedSession(null)
           }}
-          group={selectedGroup}
+          group={selectedGroup as any}
+          sessionId={selectedSession?.id}
           onSuccess={() => {
             // Refresh data if needed
+            fetchData()
           }}
         />
       )}

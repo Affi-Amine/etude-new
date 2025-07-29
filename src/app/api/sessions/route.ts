@@ -109,6 +109,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check for existing session on the same date for the same group
+    const sessionDate = new Date(validatedData.date)
+    const startOfDay = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate())
+    const endOfDay = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate() + 1)
+    
+    const existingSession = await prisma.session.findFirst({
+      where: {
+        groupId: validatedData.groupId,
+        teacherId: session.user.id,
+        date: {
+          gte: startOfDay,
+          lt: endOfDay
+        }
+      }
+    })
+
+    if (existingSession) {
+      return NextResponse.json(
+        { error: 'A session already exists for this group on this date' },
+        { status: 409 }
+      )
+    }
+
     const newSession = await prisma.session.create({
       data: {
         ...validatedData,

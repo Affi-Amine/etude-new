@@ -199,15 +199,55 @@ export function AttendanceModal({ isOpen, onClose, group, sessionId, onSuccess }
         </div>
 
         <div className="space-y-6 p-6">
-          {/* Existing Attendance Warning */}
+          {/* Status Messages */}
           {hasExistingAttendance && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-amber-600" />
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
+                  <span className="text-blue-600 text-xs">✓</span>
+                </div>
                 <div>
-                  <h4 className="font-medium text-amber-800">Présence déjà enregistrée</h4>
-                  <p className="text-sm text-amber-700">
-                    La présence a déjà été prise pour cette session. Vous pouvez modifier les statuts si nécessaire.
+                  <p className="text-sm font-medium text-blue-800 mb-1">
+                    Modification de la présence existante
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    Cette session a déjà une présence enregistrée. Vos modifications mettront à jour les données existantes.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {!hasExistingAttendance && sessionId && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                  <span className="text-green-600 text-xs">+</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-green-800 mb-1">
+                    Enregistrement de nouvelle présence
+                  </p>
+                  <p className="text-xs text-green-600">
+                    Vous allez enregistrer la présence pour cette session programmée.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {!sessionId && (
+            <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 bg-orange-100 rounded-full flex items-center justify-center mt-0.5">
+                  <span className="text-orange-600 text-xs">!</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-orange-800 mb-1">
+                    Création de session et présence
+                  </p>
+                  <p className="text-xs text-orange-600">
+                    Aucune session n'existe pour cette date. Une nouvelle session sera créée avec la présence.
                   </p>
                 </div>
               </div>

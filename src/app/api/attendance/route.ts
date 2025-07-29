@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { getTenantPrisma, getCurrentTenantId } from '@/lib/db-tenant'
 import { z } from 'zod'
+import { updateAllPaymentStatuses } from '@/lib/payment-logic'
 
 const createAttendanceSchema = z.object({
   sessionId: z.string().min(1),
@@ -131,21 +132,55 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Create the session first
-      const newSession = await prisma.session.create({
-        data: {
+      const sessionDate = new Date(validatedData.date)
+      
+      // Check if a session already exists for this group on this date
+      let existingSession = await prisma.session.findFirst({
+        where: {
           groupId: validatedData.groupId,
           teacherId: session.user.id,
-          date: new Date(validatedData.date),
-          duration: validatedData.duration || group.scheduleDuration || (Array.isArray(group.weeklySchedule) && group.weeklySchedule[0] && typeof group.weeklySchedule[0] === 'object' && 'duration' in group.weeklySchedule[0] ? (group.weeklySchedule[0] as any).duration : null) || 60,
-          status: 'COMPLETED'
+          date: {
+            gte: new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate()),
+            lt: new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate() + 1)
+          }
         }
       })
+
+      let targetSession
+      
+      if (existingSession) {
+        // Use existing session and update its status if needed
+        targetSession = await prisma.session.update({
+          where: { id: existingSession.id },
+          data: {
+            status: 'COMPLETED',
+            duration: validatedData.duration || existingSession.duration
+          }
+        })
+        
+        // Delete existing attendance for this session to replace with new data
+        await prisma.attendance.deleteMany({
+          where: {
+            sessionId: existingSession.id
+          }
+        })
+      } else {
+        // Create a new session only if none exists
+        targetSession = await prisma.session.create({
+          data: {
+            groupId: validatedData.groupId,
+            teacherId: session.user.id,
+            date: sessionDate,
+            duration: validatedData.duration || group.scheduleDuration || (Array.isArray(group.weeklySchedule) && group.weeklySchedule[0] && typeof group.weeklySchedule[0] === 'object' && 'duration' in group.weeklySchedule[0] ? (group.weeklySchedule[0] as any).duration : null) || 60,
+            status: 'COMPLETED'
+          }
+        })
+      }
 
       // Create attendance records
       const attendanceRecords = await prisma.attendance.createMany({
         data: validatedData.attendanceData.map(attendance => ({
-          sessionId: newSession.id,
+          sessionId: targetSession.id,
           studentId: attendance.studentId,
           status: attendance.status,
           notes: attendance.notes,
@@ -153,9 +188,9 @@ export async function POST(request: NextRequest) {
         }))
       })
 
-      // Fetch the created session with attendance
+      // Fetch the session with attendance
       const sessionWithAttendance = await prisma.session.findUnique({
-        where: { id: newSession.id },
+        where: { id: targetSession.id },
         include: {
           group: {
             select: {
@@ -178,11 +213,20 @@ export async function POST(request: NextRequest) {
         }
       })
 
+      // Update payment statuses for the group
+      try {
+        await updateAllPaymentStatuses(validatedData.groupId);
+      } catch (error) {
+        console.error('Failed to update payment statuses:', error);
+        // Don't fail the request if payment update fails
+      }
+
       return NextResponse.json({
         success: true,
         session: sessionWithAttendance,
-        attendanceCount: attendanceRecords.count
-      }, { status: 201 })
+        attendanceCount: attendanceRecords.count,
+        isUpdate: !!existingSession
+      }, { status: existingSession ? 200 : 201 })
     } else {
       // Handle existing session attendance
       const validatedData = createAttendanceSchema.parse(body)
@@ -225,6 +269,20 @@ export async function POST(request: NextRequest) {
         where: { id: validatedData.sessionId },
         data: { status: 'COMPLETED' }
       })
+
+      // Update payment statuses for the group
+      try {
+        const group = await prisma.group.findUnique({
+          where: { id: sessionRecord.groupId },
+          select: { id: true }
+        });
+        if (group) {
+          await updateAllPaymentStatuses(group.id);
+        }
+      } catch (error) {
+        console.error('Failed to update payment statuses:', error);
+        // Don't fail the request if payment update fails
+      }
 
       return NextResponse.json({
         success: true,
@@ -282,6 +340,20 @@ export async function PUT(request: NextRequest) {
         teacherId: session.user.id
       }))
     })
+
+    // Update payment statuses for the group
+    try {
+      const group = await prisma.group.findUnique({
+        where: { id: sessionRecord.groupId },
+        select: { id: true }
+      });
+      if (group) {
+        await updateAllPaymentStatuses(group.id);
+      }
+    } catch (error) {
+      console.error('Failed to update payment statuses:', error);
+      // Don't fail the request if payment update fails
+    }
 
     return NextResponse.json({
       success: true,
