@@ -37,7 +37,8 @@ import {
   getPaymentStatusColor,
   isToday,
   getGroupAttendanceRate,
-  formatWeeklySchedule
+  formatWeeklySchedule,
+  getFirstScheduleTime
 } from '@/lib/utils'
 
 // Quick actions remain the same but updated href paths
@@ -180,10 +181,19 @@ export default function DashboardPage() {
     return createdDate.getMonth() === lastMonth && createdDate.getFullYear() === lastMonthYear
   }).length || 0
 
-  const previousMonthEarnings = dashboardData.paymentRecords?.filter(p => {
-    const paymentDate = new Date(p.createdAt)
-    return paymentDate.getMonth() === lastMonth && paymentDate.getFullYear() === lastMonthYear
-  }).reduce((sum, p) => sum + p.amount, 0) || 0
+  // Calculate previous month earnings from sessions
+  const previousMonthSessionsForEarnings = dashboardData.sessions?.filter(s => {
+    const sessionDate = new Date(s.date)
+    return sessionDate.getMonth() === lastMonth && sessionDate.getFullYear() === lastMonthYear
+  }) || []
+  
+  const previousMonthEarnings = previousMonthSessionsForEarnings.reduce((total: number, session: any) => {
+    const group = dashboardData.groups?.find((g: any) => g.id === session.groupId)
+    if (!group) return total
+    const attendeeCount = session.attendance?.filter((a: any) => a.status === 'PRESENT').length || 0
+    const pricePerStudent = group.sessionFee || (group.monthlyFee ? group.monthlyFee / 4 : 0)
+    return total + (attendeeCount * (pricePerStudent || 0))
+  }, 0)
 
   // Calculate attendance rate for previous month
   const previousMonthSessions = dashboardData.sessions?.filter(s => {
@@ -194,7 +204,7 @@ export default function DashboardPage() {
   const previousMonthAttendanceRate = previousMonthSessions.length > 0 
     ? Math.round(
         previousMonthSessions.reduce((sum, session) => {
-          const attendanceCount = session.attendance?.filter((a: any) => a.present).length || 0
+          const attendanceCount = session.attendance?.filter((a: any) => a.status === 'PRESENT').length || 0
           const totalStudents = session.attendance?.length || 1
           return sum + (attendanceCount / totalStudents) * 100
         }, 0) / previousMonthSessions.length
@@ -553,7 +563,7 @@ export default function DashboardPage() {
                               <Users className="h-4 w-4 mr-1" />
                               {group.students?.length || 0} étudiants
                               <Clock className="h-4 w-4 ml-3 mr-1" />
-                              {formatWeeklySchedule(group.weeklySchedule) || (group.schedule?.day && group.schedule?.time ? `${group.schedule.day} à ${group.schedule.time}` : 'N/A à N/A')}
+                              {formatWeeklySchedule(group.weeklySchedule)}
                             </div>
                           </div>
                           <div className="text-right">
@@ -561,7 +571,10 @@ export default function DashboardPage() {
                               {attendanceRate}% présence
                             </p>
                             <p className="text-xs text-gray-500">
-                              {formatCurrency(group.monthlyFee || 0)}/mois
+                              {group.paymentThreshold || 4} sessions/mois
+                            </p>
+                            <p className="text-xs font-medium text-blue-600">
+                              {formatCurrency((group.sessionFee || 0) * (group.paymentThreshold || 4))}/mois
                             </p>
                           </div>
                         </div>
@@ -617,12 +630,12 @@ export default function DashboardPage() {
                           <div>
                             <p className="font-medium text-gray-900">{session.group?.name}</p>
                             <p className="text-sm text-gray-600">
-                              {formatDate(new Date(session.date))} • {session.group?.schedule?.time || 'N/A'}
+                              {formatDate(new Date(session.date))} • {getFirstScheduleTime(session.group?.weeklySchedule) || formatTime(session.date)}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm text-gray-500">{session.group?.schedule?.day || 'N/A'}</span>
+                          <span className="text-sm text-gray-500">{formatTime(session.date)}</span>
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             session.status.toUpperCase() === 'COMPLETED' ? 'bg-green-100 text-green-800' :
                             session.status.toUpperCase() === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :

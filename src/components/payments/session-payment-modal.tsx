@@ -161,7 +161,7 @@ export function SessionPaymentModal({ isOpen, onClose, group, onSuccess }: Sessi
               Suivi des paiements - {group.name}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Seuil de paiement: {group.paymentThreshold || 4} sessions
+              Sessions par mois: {group.paymentThreshold || 4} sessions (= seuil de paiement)
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -179,21 +179,21 @@ export function SessionPaymentModal({ isOpen, onClose, group, onSuccess }: Sessi
                   <Clock className="h-3 w-3" />
                   <span>En cours</span>
                 </div>
-                <span className="text-gray-600">Moins de {group.paymentThreshold || 4} sessions</span>
+                <span className="text-gray-600">Moins de {group.paymentThreshold || 4} sessions ce mois</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300">
                   <AlertCircle className="h-3 w-3" />
-                  <span>Seuil atteint</span>
+                  <span>Mois complet</span>
                 </div>
-                <span className="text-gray-600">Exactement {group.paymentThreshold || 4} sessions</span>
+                <span className="text-gray-600">Exactement {group.paymentThreshold || 4} sessions ce mois</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-100 text-red-800 border border-red-300">
                   <DollarSign className="h-3 w-3" />
                   <span>Paiement dû</span>
                 </div>
-                <span className="text-gray-600">Plus de {group.paymentThreshold || 4} sessions</span>
+                <span className="text-gray-600">Plus de {group.paymentThreshold || 4} sessions ce mois</span>
               </div>
             </div>
           </div>
@@ -232,7 +232,7 @@ export function SessionPaymentModal({ isOpen, onClose, group, onSuccess }: Sessi
                               </div>
                               <div className="flex items-center gap-1">
                                 <DollarSign className="h-4 w-4" />
-                                <span>Montant: {formatCurrency(defaultAmount)}</span>
+                                <span>Montant mensuel: {formatCurrency(defaultAmount)}</span>
                               </div>
                               {student.isPaid && student.lastPaymentDate && (
                                 <div className="flex items-center gap-1 text-green-600">
@@ -268,7 +268,7 @@ export function SessionPaymentModal({ isOpen, onClose, group, onSuccess }: Sessi
                         {/* Progress bar */}
                         <div className="mt-3">
                           <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                            <span>Progression du cycle</span>
+                            <span>Progression du mois</span>
                             <span>{student.sessionsAttended}/{threshold} sessions</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">

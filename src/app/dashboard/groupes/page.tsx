@@ -532,6 +532,24 @@ export default function GroupsPage() {
                           {formatCurrency(group.sessionFee || (group.monthlyFee ? group.monthlyFee / 4 : 0) || 0)}
                         </span>
                       </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600 flex items-center">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          Sessions/mois
+                        </span>
+                        <span className="font-medium">{group.paymentThreshold || 4}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600 flex items-center">
+                          <DollarSign className="h-4 w-4 mr-1" />
+                          Prix mensuel
+                        </span>
+                        <span className="font-medium text-blue-600">
+                          {formatCurrency((group.sessionFee || 0) * (group.paymentThreshold || 4))}
+                        </span>
+                      </div>
                     </div>
                     
                     {/* Payment Alert */}

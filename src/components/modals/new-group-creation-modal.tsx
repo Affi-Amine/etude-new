@@ -445,7 +445,7 @@ export default function NewGroupCreationModal({
               </div>
               
               <div>
-                <Label htmlFor="paymentThreshold">Seuil de paiement (sessions) *</Label>
+                <Label htmlFor="paymentThreshold">Nombre de sessions par mois *</Label>
                 <Input
                   id="paymentThreshold"
                   type="number"
@@ -459,7 +459,23 @@ export default function NewGroupCreationModal({
                   placeholder="ex: 8"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  L'étudiant paie après ce nombre de sessions
+                  Nombre de sessions dans le mois (= seuil de paiement)
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="monthlyPrice">Prix mensuel (DT)</Label>
+                <div className="relative">
+                  <Input
+                    id="monthlyPrice"
+                    type="text"
+                    value={`${(formData.sessionFee * formData.paymentThreshold).toFixed(2)} DT`}
+                    disabled
+                    className="bg-gray-50 text-gray-700"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Calculé automatiquement: {formData.paymentThreshold} sessions × {formData.sessionFee} DT
                 </p>
               </div>
               

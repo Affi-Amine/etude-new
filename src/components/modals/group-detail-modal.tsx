@@ -255,13 +255,14 @@ export default function GroupDetailModal({
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-gray-600">Prix/cycle</p>
+                        <p className="text-sm text-gray-600">Prix mensuel</p>
                         <p className="text-2xl font-bold text-gray-900">
                           {formatCurrency(
-                            group.paymentConfig?.monthlyFee || 
-                            group.monthlyFee || 
-                            (group.sessionFee && group.paymentThreshold ? group.sessionFee * group.paymentThreshold : 0)
+                            (group.sessionFee || 0) * (group.paymentThreshold || 4)
                           )}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {group.paymentThreshold || 4} sessions × {formatCurrency(group.sessionFee || 0)}
                         </p>
                       </div>
                       <DollarSign className="h-8 w-8 text-yellow-600" />
@@ -294,8 +295,8 @@ export default function GroupDetailModal({
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Sessions par cycle</p>
-                      <p className="font-medium">4 sessions</p>
+                      <p className="text-sm text-gray-600">Sessions par mois</p>
+                      <p className="font-medium">{group.paymentThreshold || 4} sessions</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Prix par session</p>

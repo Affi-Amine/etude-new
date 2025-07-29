@@ -196,13 +196,21 @@ export function getGroupAttendanceRate(sessions: Session[], groupId: string): nu
   
   if (groupSessions.length === 0) return 0
   
+  // Use attendance instead of attendees for compatibility with API data
   const totalPossibleAttendances = groupSessions.reduce((total, session) => 
-    total + (session.attendees?.length || 0), 0
+    total + (session.attendance?.length || session.attendees?.length || 0), 0
   )
   
-  const totalActualAttendances = groupSessions.reduce((total, session) => 
-    total + (session.attendees?.filter(a => a.present).length || 0), 0
-  )
+  const totalActualAttendances = groupSessions.reduce((total, session) => {
+    if (session.attendance) {
+      return total + (session.attendance.filter((a: any) => a.status === 'PRESENT').length || 0)
+    } else if (session.attendees) {
+      return total + (session.attendees.filter(a => a.present).length || 0)
+    }
+    return total
+  }, 0)
+  
+  if (totalPossibleAttendances === 0) return 0
   
   return Math.round((totalActualAttendances / totalPossibleAttendances) * 100)
 }
@@ -237,8 +245,8 @@ export function searchStudents(students: Student[], query: string): Student[] {
   const lowercaseQuery = query.toLowerCase()
   return students.filter(student => 
     student.name.toLowerCase().includes(lowercaseQuery) ||
-    student.email.toLowerCase().includes(lowercaseQuery) ||
-    student.phone.includes(query)
+    (student.email && student.email.toLowerCase().includes(lowercaseQuery)) ||
+    (student.phone && student.phone.includes(query))
   )
 }
 
