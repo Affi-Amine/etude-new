@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input'
 import { formatTime, formatDate, getFirstScheduleTime } from '@/lib/utils'
 import AddSessionModal from '@/components/modals/AddSessionModal'
 import { AttendanceModal } from '@/components/attendance/attendance-modal'
-import { PaymentModal } from '@/components/payments/payment-modal'
+import { SessionPaymentModal } from '@/components/payments/session-payment-modal'
 
 const daysOfWeek = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 const monthNames = [
@@ -692,7 +692,7 @@ export default function CalendrierPage() {
       
       {/* Payment Modal */}
       {selectedGroup && (
-        <PaymentModal
+        <SessionPaymentModal
           isOpen={isPaymentModalOpen}
           onClose={() => {
             setIsPaymentModalOpen(false)
@@ -701,6 +701,7 @@ export default function CalendrierPage() {
           group={selectedGroup}
           onSuccess={() => {
             // Refresh data if needed
+            fetchData()
           }}
         />
       )}

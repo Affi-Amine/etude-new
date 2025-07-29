@@ -32,7 +32,7 @@ export default function GroupDetailModal({
   onRemoveStudent,
   onAddStudent
 }: GroupDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'students' | 'attendance' | 'payments'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'students'>('overview')
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0])
   const [attendance, setAttendance] = useState<Record<string, boolean>>({})
 
@@ -196,9 +196,7 @@ export default function GroupDetailModal({
         <div className="flex border-b border-gray-200">
           {[
             { id: 'overview', label: 'Aperçu', icon: Users },
-            { id: 'students', label: 'Étudiants', icon: Users },
-            { id: 'attendance', label: 'Présence', icon: CheckCircle },
-            { id: 'payments', label: 'Paiements', icon: DollarSign }
+            { id: 'students', label: 'Étudiants', icon: Users }
           ].map(tab => {
             const Icon = tab.icon
             return (
@@ -401,196 +399,9 @@ export default function GroupDetailModal({
             </div>
           )}
 
-          {activeTab === 'attendance' && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Marquer la présence</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Date de la session
-                      </label>
-                      <input
-                        type="date"
-                        value={attendanceDate}
-                        onChange={(e) => setAttendanceDate(e.target.value)}
-                        className="border border-gray-300 rounded-md px-3 py-2"
-                      />
-                    </div>
-                    <div className="flex-1" />
-                    <Button
-                      onClick={submitAttendance}
-                      disabled={Object.keys(attendance).length === 0}
-                      className="bg-green-600"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Enregistrer la présence
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {groupStudents.map(student => (
-                      <div key={student.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900">{student.name}</p>
-                          <p className="text-sm text-gray-600">{student.email}</p>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleAttendanceChange(student.id, true)}
-                            className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                              attendance[student.id] === true
-                                ? 'bg-green-100 text-green-800 border border-green-300'
-                                : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-green-50'
-                            }`}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Présent
-                          </button>
-                          
-                          <button
-                            onClick={() => handleAttendanceChange(student.id, false)}
-                            className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                              attendance[student.id] === false
-                                ? 'bg-red-100 text-red-800 border border-red-300'
-                                : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-red-50'
-                            }`}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Absent
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Recent Sessions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sessions récentes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {groupSessions.slice(0, 5).map(session => (
-                      <div key={session.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                        <div>
-                          <p className="font-medium text-gray-900">{formatDate(new Date(session.date))}</p>
-                          <p className="text-sm text-gray-600">
-                            {(session.attendees || []).filter(a => a.present).length}/{(session.attendees || []).length} présents
-                          </p>
-                        </div>
-                        <Badge className={session.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                          {session.status === 'COMPLETED' ? 'Terminée' : 'Programmée'}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
 
-          {activeTab === 'payments' && (
-            <div className="space-y-6">
-              {/* Payment Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600">Étudiants à jour</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {studentsWithPaymentStatus.filter(s => s.paymentStatus.status === 'paid').length}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600">Paiements dus</p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {studentsWithPaymentStatus.filter(s => ['due', 'overdue'].includes(s.paymentStatus.status)).length}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600">Revenus totaux</p>
-                      <p className="text-2xl font-bold text-indigo-600">
-                        {formatCurrency(
-                          groupStudents.reduce((sum, student) => {
-                            const studentPayments = student.payments || []
-                            return sum + studentPayments
-                              .filter((p: any) => p.groupId === group.id)
-                              .reduce((total: number, p: any) => total + p.amount, 0)
-                          }, 0)
-                        )}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {/* Students Needing Payment */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Étudiants nécessitant un paiement</CardTitle>
-                    <Button size="sm" variant="outline">
-                      <Download className="h-4 w-4 mr-2" />
-                      Exporter
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {studentsWithPaymentStatus
-                      .filter(s => ['due', 'overdue'].includes(s.paymentStatus.status))
-                      .map(student => (
-                        <div key={student.id} className="flex items-center justify-between p-4 border border-red-200 bg-red-50 rounded-lg">
-                          <div>
-                            <p className="font-medium text-gray-900">{student.name}</p>
-                            <p className="text-sm text-gray-600">
-                              {student.paymentStatus.currentCycleSessions} sessions complétées
-                            </p>
-                            <p className="text-sm text-red-600">
-                              {student.paymentStatus.statusMessage}
-                            </p>
-                          </div>
-                          
-                          <div className="text-right">
-                            <p className="font-bold text-red-600">
-                              {formatCurrency(student.paymentStatus.nextPaymentAmount)}
-                            </p>
-                            <Button size="sm" className="mt-2 bg-green-600">
-                              Marquer comme payé
-                            </Button>
-                          </div>
-                        </div>
-                      ))
-                    }
-                    
-                    {studentsWithPaymentStatus.filter(s => ['due', 'overdue'].includes(s.paymentStatus.status)).length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                        <p>Tous les étudiants sont à jour avec leurs paiements!</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+
+
         </div>
       </motion.div>
     </div>

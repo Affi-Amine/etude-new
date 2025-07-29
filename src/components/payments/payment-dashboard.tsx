@@ -39,6 +39,7 @@ interface PaymentSummary {
   overdueAmount: number
   nextDueDate?: string
   status: 'UP_TO_DATE' | 'PENDING' | 'OVERDUE'
+  paymentStatus?: string
   lastPaymentDate?: string
   attendedSessions: number
   sessionsInCurrentCycle: number
@@ -181,21 +182,35 @@ export function PaymentDashboard({ groupId, groupName }: PaymentDashboardProps) 
     document.body.removeChild(link);
   }
 
-  const getStatusColor = (status: PaymentSummary['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'UP_TO_DATE': return 'bg-green-100 text-green-800'
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800'
-      case 'OVERDUE': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'UP_TO_DATE':
+      case 'À JOUR':
+        return 'bg-green-100 text-green-800'
+      case 'PENDING':
+      case 'EN ATTENTE':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'OVERDUE':
+      case 'EN RETARD':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
-  const getStatusIcon = (status: PaymentSummary['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'UP_TO_DATE': return <CheckCircle className="h-4 w-4" />
-      case 'PENDING': return <Clock className="h-4 w-4" />
-      case 'OVERDUE': return <XCircle className="h-4 w-4" />
-      default: return <AlertTriangle className="h-4 w-4" />
+      case 'UP_TO_DATE':
+      case 'À JOUR':
+        return <CheckCircle className="h-4 w-4" />
+      case 'PENDING':
+      case 'EN ATTENTE':
+        return <Clock className="h-4 w-4" />
+      case 'OVERDUE':
+      case 'EN RETARD':
+        return <XCircle className="h-4 w-4" />
+      default:
+        return <AlertTriangle className="h-4 w-4" />
     }
   }
 
@@ -322,11 +337,12 @@ export function PaymentDashboard({ groupId, groupName }: PaymentDashboardProps) 
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <h4 className="font-medium">{summary.studentName}</h4>
-                    <Badge className={getStatusColor(summary.status)}>
-                      {getStatusIcon(summary.status)}
+                    <Badge className={getStatusColor(summary.paymentStatus || summary.status)}>
+                      {getStatusIcon(summary.paymentStatus || summary.status)}
                       <span className="ml-1">
-                        {summary.status === 'UP_TO_DATE' ? 'À jour' :
-                         summary.status === 'PENDING' ? 'En attente' : 'En retard'}
+                        {summary.paymentStatus || 
+                         (summary.status === 'UP_TO_DATE' ? 'À jour' :
+                          summary.status === 'PENDING' ? 'En attente' : 'En retard')}
                       </span>
                     </Badge>
                   </div>
