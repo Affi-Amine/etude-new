@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react'
+import { useToast } from '@/components/ui/toast'
 
 interface Student {
   id: string
@@ -67,6 +68,7 @@ const statusConfig = {
 }
 
 export function AttendanceModal({ isOpen, onClose, group, sessionId, onSuccess }: AttendanceModalProps) {
+  const { toast } = useToast()
   const [date, setDate] = useState<Date>(new Date())
   const [duration, setDuration] = useState<number>(() => {
     // Use the duration from weeklySchedule if available, otherwise use scheduleDuration or default to 60
@@ -164,12 +166,18 @@ export function AttendanceModal({ isOpen, onClose, group, sessionId, onSuccess }
         throw new Error(error.error || 'Erreur lors de l\'enregistrement')
       }
 
-      alert(hasExistingAttendance ? 'Présences mises à jour avec succès' : 'Présences enregistrées avec succès')
+      toast({
+        type: 'success',
+        title: hasExistingAttendance ? 'Présences mises à jour avec succès' : 'Présences enregistrées avec succès'
+      })
       onSuccess?.()
       onClose()
     } catch (error) {
       console.error('Error submitting attendance:', error)
-      alert(error instanceof Error ? error.message : 'Erreur lors de l\'enregistrement')
+      toast({
+        type: 'error',
+        title: error instanceof Error ? error.message : 'Erreur lors de l\'enregistrement'
+      })
     } finally {
       setIsSubmitting(false)
     }

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DollarSign, X, Users, CheckCircle, AlertCircle, Clock } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { useToast } from '@/components/ui/toast'
 
 interface Student {
   id: string
@@ -55,6 +56,7 @@ export function SessionPaymentModal({ isOpen, onClose, group, onSuccess }: Sessi
   const [studentsData, setStudentsData] = useState<StudentSessionData[]>([])
   const [loading, setLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     if (isOpen && group) {
@@ -102,10 +104,17 @@ export function SessionPaymentModal({ isOpen, onClose, group, onSuccess }: Sessi
 
       // Refresh data
       await fetchStudentSessionData()
+      toast({
+        type: 'success',
+        title: 'Paiement enregistré avec succès'
+      })
       onSuccess?.()
     } catch (error) {
       console.error('Error marking student as paid:', error)
-      alert('Erreur lors de l\'enregistrement du paiement')
+      toast({
+        type: 'error',
+        title: 'Erreur lors de l\'enregistrement du paiement'
+      })
     } finally {
       setIsSubmitting(false)
     }

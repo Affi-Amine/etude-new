@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useStudents } from '@/hooks/useStudents'
 import { formatCurrency, formatDate, formatWeeklySchedule } from '@/lib/utils'
 import type { Group, Student } from '@/lib/types'
+import { useToast } from '@/components/ui/toast'
 
 interface GroupDetailModalProps {
   isOpen: boolean
@@ -32,6 +33,7 @@ export default function GroupDetailModal({
   onRemoveStudent,
   onAddStudent
 }: GroupDetailModalProps) {
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<'overview' | 'students'>('overview')
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0])
   const [attendance, setAttendance] = useState<Record<string, boolean>>({})
@@ -139,7 +141,10 @@ export default function GroupDetailModal({
     console.log('Submitting attendance for', attendanceDate, attendance)
     // Reset attendance form
     setAttendance({})
-    alert('Présence enregistrée avec succès!')
+    toast({
+      type: 'success',
+      title: 'Présence enregistrée avec succès!'
+    })
   }
 
   if (!isOpen || !group) return null
@@ -298,7 +303,7 @@ export default function GroupDetailModal({
                         {formatCurrency(
                           group?.paymentConfig?.sessionFee || 
                           group?.sessionFee || 
-                          ((group?.paymentConfig?.monthlyFee || group?.monthlyFee) ? (group?.paymentConfig?.monthlyFee || group?.monthlyFee) / 4 : 0)
+                          ((group?.paymentConfig?.monthlyFee || group?.monthlyFee) ? (group?.paymentConfig?.monthlyFee || group?.monthlyFee || 0) / 4 : 0)
                         )}
                       </p>
                     </div>

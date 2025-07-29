@@ -114,13 +114,6 @@ export async function POST(request: NextRequest) {
       where: {
         id: validatedData.groupId,
         teacherId: session.user.id
-      },
-      include: {
-        students: {
-          where: {
-            id: validatedData.studentId
-          }
-        }
       }
     })
 
@@ -131,7 +124,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (group.students.length === 0) {
+    // Verify that the student is in this group
+    const groupStudent = await prisma.groupStudent.findFirst({
+      where: {
+        groupId: validatedData.groupId,
+        studentId: validatedData.studentId,
+        isActive: true
+      }
+    })
+
+    if (!groupStudent) {
       return NextResponse.json(
         { error: 'Student not found in this group' },
         { status: 404 }
