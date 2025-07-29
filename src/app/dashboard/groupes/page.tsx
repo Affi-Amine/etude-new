@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Plus,
@@ -62,6 +62,9 @@ export default function GroupsPage() {
   const { groups, loading: groupsLoading, createGroup, updateGroup, deleteGroup, addStudentsToGroup } = useGroups()
   const { students, loading: studentsLoading, createStudent, fetchStudents } = useStudents()
   
+  // Global stats state
+  const [globalStats, setGlobalStats] = useState({ totalRevenue: 0 })
+  
   // Modal states
   const [isCreationModalOpen, setIsCreationModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -69,6 +72,22 @@ export default function GroupsPage() {
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null)
   const [editingGroup, setEditingGroup] = useState<Group | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Fetch global stats for total revenue
+  useEffect(() => {
+    const fetchGlobalStats = async () => {
+      try {
+        const response = await fetch('/api/payments/global-stats')
+        if (response.ok) {
+          const data = await response.json()
+          setGlobalStats({ totalRevenue: data.totalRevenue || 0 })
+        }
+      } catch (error) {
+        console.error('Error fetching global stats:', error)
+      }
+    }
+    fetchGlobalStats()
+  }, [])
 
   // Handler functions
   const handleCreateGroup = async (groupData: any & { newStudents?: Array<{name: string, classe: string, lycee: string, phone: string, email?: string}> }) => {
@@ -227,19 +246,30 @@ export default function GroupsPage() {
       )
       const allPaymentRecords = groupStudents.flatMap(student => student.payments || [])
       
-      const attendanceRate = getGroupAttendanceRate(groupSessions, group.id)
+      // Calculate attendance rate more accurately
+       const completedSessions = groupSessions.filter(session => session.status === 'COMPLETED')
+       let attendanceRate = 0
+       if (completedSessions.length > 0 && groupStudents.length > 0) {
+         const totalPossibleAttendances = completedSessions.length * groupStudents.length
+         const actualAttendances = completedSessions.reduce((total, session) => {
+           const sessionAttendances = session.attendance?.filter((att: any) => att.status === 'PRESENT').length || 0
+           return total + sessionAttendances
+         }, 0)
+         attendanceRate = totalPossibleAttendances > 0 ? (actualAttendances / totalPossibleAttendances) * 100 : 0
+       }
+      
       const stats = {
         totalRevenue: allPaymentRecords.reduce((sum, payment) => sum + (payment.amount || 0), 0),
         studentsNeedingPayment: 0, // Will be calculated separately
         totalSessions: groupSessions.length,
         totalStudents: groupStudents.length,
-        attendanceRate: attendanceRate
+        attendanceRate: Math.round(attendanceRate)
       }
       
       return {
         ...group,
         stats,
-        attendanceRate,
+        attendanceRate: Math.round(attendanceRate),
         studentsCount: group.students?.length || 0,
         isActive: group.isActive
       }
@@ -301,10 +331,10 @@ export default function GroupsPage() {
       totalGroups: groups.length,
       activeGroups: groups.filter(g => g.isActive).length,
       totalStudents: groups.reduce((sum, g) => sum + (g.students?.length || 0), 0),
-      totalRevenue: groupsWithStats.reduce((sum, g) => sum + g.stats.totalRevenue, 0),
+      totalRevenue: globalStats.totalRevenue, // Use global stats from payments API
       studentsNeedingPayment: groupsWithStats.reduce((sum, g) => sum + g.stats.studentsNeedingPayment, 0)
     }
-  }, [groups, groupsWithStats])
+  }, [groups, groupsWithStats, globalStats])
 
   const getStatusBadge = (group: typeof groupsWithStats[0]) => {
     if (!group || !group.isActive) {
@@ -500,8 +530,8 @@ export default function GroupsPage() {
                         <div className="text-xs text-gray-600">Étudiants</div>
                       </div>
                       <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">{groupSessions.length}</div>
-                        <div className="text-xs text-gray-600">Sessions</div>
+                        <div className="text-2xl font-bold text-green-600">{group.paymentThreshold || 8}</div>
+                        <div className="text-xs text-gray-600">Sessions/mois</div>
                       </div>
                     </div>
                     
