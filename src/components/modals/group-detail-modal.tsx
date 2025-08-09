@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   X, Users, Calendar, DollarSign, Clock, CheckCircle, XCircle,
-  AlertCircle, Edit, Trash2, UserMinus, FileText, Download
+  AlertCircle, Edit, Trash2, UserMinus, FileText, Download, Share2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import { useStudents } from '@/hooks/useStudents'
 import { formatCurrency, formatDate, formatWeeklySchedule } from '@/lib/utils'
 import type { Group, Student } from '@/lib/types'
 import { useToast } from '@/components/ui/toast'
+import GroupInvitationManager from '@/components/invitations/GroupInvitationManager'
 
 interface GroupDetailModalProps {
   isOpen: boolean
@@ -34,7 +35,7 @@ export default function GroupDetailModal({
   onAddStudent
 }: GroupDetailModalProps) {
   const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState<'overview' | 'students'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'students' | 'invitations'>('overview')
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0])
   const [attendance, setAttendance] = useState<Record<string, boolean>>({})
 
@@ -201,7 +202,8 @@ export default function GroupDetailModal({
         <div className="flex border-b border-gray-200">
           {[
             { id: 'overview', label: 'Aperçu', icon: Users },
-            { id: 'students', label: 'Étudiants', icon: Users }
+            { id: 'students', label: 'Étudiants', icon: Users },
+            { id: 'invitations', label: 'Invitations', icon: Share2 }
           ].map(tab => {
             const Icon = tab.icon
             return (
@@ -405,8 +407,18 @@ export default function GroupDetailModal({
             </div>
           )}
 
-
-
+          {activeTab === 'invitations' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Gestion des invitations</h3>
+                <p className="text-sm text-gray-600">
+                  Créez et gérez les codes d'invitation pour permettre aux étudiants de rejoindre ce groupe
+                </p>
+              </div>
+              
+              <GroupInvitationManager groupId={group?.id || ''} groupName={group?.name || ''} />
+            </div>
+          )}
 
         </div>
       </motion.div>

@@ -10,6 +10,18 @@ const createSessionSchema = z.object({
   duration: z.number().min(1).optional(), // Duration in minutes, optional - will use group's default if not provided
   status: z.enum(['SCHEDULED', 'COMPLETED', 'CANCELLED']).default('SCHEDULED'),
   notes: z.string().optional(),
+  // Course content fields
+  title: z.string().optional(),
+  description: z.string().optional(),
+  objectives: z.array(z.string()).optional(),
+  materials: z.array(z.string()).optional(),
+  homework: z.string().optional(),
+  resources: z.array(z.object({
+    type: z.enum(['file', 'link', 'document']),
+    name: z.string(),
+    url: z.string(),
+    size: z.number().optional()
+  })).optional(),
 })
 
 export async function GET(request: NextRequest) {

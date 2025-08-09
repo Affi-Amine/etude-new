@@ -15,7 +15,10 @@ import {
   Edit,
   Trash2,
   Eye,
-  DollarSign
+  DollarSign,
+  BookOpen,
+  FileText,
+  Settings
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,6 +27,8 @@ import { formatTime, formatDate, getFirstScheduleTime } from '@/lib/utils'
 import AddSessionModal from '@/components/modals/AddSessionModal'
 import { AttendanceModal } from '@/components/attendance/attendance-modal'
 import { SessionPaymentModal } from '@/components/payments/session-payment-modal'
+import CourseContentModal from '@/components/modals/course-content-modal'
+import SessionCompletionModal from '@/components/modals/session-completion-modal'
 
 const daysOfWeek = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
 const monthNames = [
@@ -38,6 +43,15 @@ interface Session {
   duration?: number
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED'
   notes?: string
+  // Course content fields
+  title?: string
+  description?: string
+  objectives?: string[]
+  materials?: string[]
+  homework?: string
+  resources?: any
+  createdAt: Date
+  updatedAt: Date
   group: {
     id: string
     name: string
@@ -106,6 +120,8 @@ export default function CalendrierPage() {
   const [modalSelectedDate, setModalSelectedDate] = useState<Date | null>(null)
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [isContentModalOpen, setIsContentModalOpen] = useState(false)
+  const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null)
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
 
@@ -581,11 +597,84 @@ export default function CalendrierPage() {
                               </div>
                             </div>
                             
+                            {/* Content Preview */}
+                            {(session.title || session.description || session.objectives?.length || session.materials?.length || session.homework) && (
+                              <div className="bg-gray-50 rounded-lg p-3 mb-3 border-l-4 border-blue-500">
+                                <div className="flex items-center mb-2">
+                                  <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                                  <span className="text-sm font-medium text-gray-900">Contenu préparé</span>
+                                </div>
+                                {session.title && (
+                                  <div className="text-sm text-gray-700 mb-1">
+                                    <strong>Titre:</strong> {session.title}
+                                  </div>
+                                )}
+                                {session.description && (
+                                  <div className="text-sm text-gray-700 mb-1">
+                                    <strong>Description:</strong> {session.description.length > 50 ? session.description.substring(0, 50) + '...' : session.description}
+                                  </div>
+                                )}
+                                {session.objectives && session.objectives.length > 0 && (
+                                  <div className="text-sm text-gray-700 mb-1">
+                                    <strong>Objectifs:</strong> {session.objectives.length} objectif{session.objectives.length !== 1 ? 's' : ''}
+                                  </div>
+                                )}
+                                {session.materials && session.materials.length > 0 && (
+                                  <div className="text-sm text-gray-700 mb-1">
+                                    <strong>Matériel:</strong> {session.materials.length} élément{session.materials.length !== 1 ? 's' : ''}
+                                  </div>
+                                )}
+                                {session.homework && (
+                                  <div className="text-sm text-gray-700">
+                                    <strong>Devoirs:</strong> {session.homework.length > 30 ? session.homework.substring(0, 30) + '...' : session.homework}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
                             <div className="flex flex-wrap items-center gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-xs px-2 py-1"
+                                onClick={() => {
+                                  setSelectedSession(session)
+                                  setIsContentModalOpen(true)
+                                }}
+                              >
+                                <BookOpen className="h-3 w-3 mr-1" />
+                                Contenu
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-xs px-2 py-1 text-blue-600 hover:text-blue-700"
+                                onClick={() => {
+                                  setSelectedSession(session)
+                                  setIsContentModalOpen(true)
+                                }}
+                              >
+                                <Settings className="h-3 w-3 mr-1" />
+                                Préparer
+                              </Button>
                               <Button variant="ghost" size="sm" className="text-xs px-2 py-1">
                                 <Eye className="h-3 w-3 mr-1" />
                                 Voir
                               </Button>
+                              {session.status === 'SCHEDULED' && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="text-xs px-2 py-1 text-green-600 hover:text-green-700"
+                                  onClick={() => {
+                                    setSelectedSession(session)
+                                    setIsCompletionModalOpen(true)
+                                  }}
+                                >
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  Finaliser
+                                </Button>
+                              )}
                               <Button 
                                 variant="ghost" 
                                 size="sm"
@@ -699,6 +788,38 @@ export default function CalendrierPage() {
             setSelectedGroup(null)
           }}
           group={selectedGroup}
+          onSuccess={() => {
+            // Refresh data if needed
+            fetchData()
+          }}
+        />
+      )}
+      
+      {/* Course Content Modal */}
+      {selectedSession && (
+        <CourseContentModal
+          isOpen={isContentModalOpen}
+          onClose={() => {
+            setIsContentModalOpen(false)
+            setSelectedSession(null)
+          }}
+          session={selectedSession}
+          onSave={() => {
+            // Refresh data if needed
+            fetchData()
+          }}
+        />
+      )}
+      
+      {/* Session Completion Modal */}
+      {selectedSession && (
+        <SessionCompletionModal
+          isOpen={isCompletionModalOpen}
+          onClose={() => {
+            setIsCompletionModalOpen(false)
+            setSelectedSession(null)
+          }}
+          session={selectedSession}
           onSuccess={() => {
             // Refresh data if needed
             fetchData()

@@ -26,7 +26,9 @@ import {
   DollarSign,
   Grid3X3,
   List,
-  CalendarDays
+  CalendarDays,
+  History,
+  Upload
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -36,34 +38,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useGroups } from '@/hooks/useGroups'
 import { useStudents } from '@/hooks/useStudents'
 import { formatCurrency, formatDate, formatTime, getInitials, getFirstScheduleTime } from '@/lib/utils'
+import CourseContentModal from '@/components/modals/course-content-modal'
+import SessionHistoryModal from '@/components/modals/session-history-modal'
 
 const statusConfig = {
-  scheduled: {
+  SCHEDULED: {
     label: 'Programmé',
     color: 'bg-blue-100 text-blue-800',
     icon: Calendar
   },
-  confirmed: {
-    label: 'Confirmé',
-    color: 'bg-green-100 text-green-800',
-    icon: CheckCircle
-  },
-  completed: {
+  COMPLETED: {
     label: 'Terminé',
     color: 'bg-gray-100 text-gray-800',
     icon: CheckCircle
   },
-  cancelled: {
+  CANCELLED: {
     label: 'Annulé',
     color: 'bg-red-100 text-red-800',
     icon: XCircle
   },
-  pending: {
-    label: 'En attente',
-    color: 'bg-orange-100 text-orange-800',
-    icon: AlertCircle
-  },
-  rescheduled: {
+  POSTPONED: {
     label: 'Reporté',
     color: 'bg-yellow-100 text-yellow-800',
     icon: AlertCircle
@@ -80,35 +74,50 @@ export default function CoursPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [mounted, setMounted] = useState(false)
   const [sessionsWithDetails, setSessionsWithDetails] = useState<any[]>([])
+  const [selectedSession, setSelectedSession] = useState<any>(null)
+  const [showContentModal, setShowContentModal] = useState(false)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
 
   // API hooks
   const { groups, loading: groupsLoading } = useGroups()
   const { students, loading: studentsLoading } = useStudents()
 
-  // Enhanced sessions with group and student data
+  // Fetch all sessions from dedicated sessions API
   useEffect(() => {
-    if (!groups || !students) return
-    
-    // Flatten all sessions from all groups
-    const allSessions = groups.flatMap(group => {
-      const groupStudents = students.filter(s => 
-        group.students.some((gs: any) => gs.studentId === s.id)
-      )
-      
-      return group.sessions.map(session => ({
-         ...session,
-         groupId: group.id,
-         group,
-         students: groupStudents,
-         status: session.status?.toLowerCase() || 'scheduled',
-         attendanceRate: session.attendances?.length > 0 ?
-           (session.attendances.filter((a: any) => a.present).length / session.attendances.length) * 100 : 0
-       }))
-     })
+    const fetchSessions = async () => {
+      try {
+        const response = await fetch('/api/sessions')
+        if (!response.ok) {
+          console.error('Failed to fetch sessions')
+          return
+        }
+        
+        const sessions = await response.json()
+        
+        // Enhance sessions with additional data
+        const enhancedSessions = sessions.map((session: any) => ({
+          ...session,
+          students: students?.filter(s => 
+            session.group?.students?.some((gs: any) => gs.studentId === s.id)
+          ) || [],
+          status: session.status || 'SCHEDULED',
+          attendanceRate: session.attendance?.length > 0 ?
+            (session.attendance.filter((a: any) => a.status === 'PRESENT').length / session.attendance.length) * 100 : 0
+        }))
+        
+        setSessionsWithDetails(enhancedSessions)
+        setMounted(true)
+      } catch (error) {
+        console.error('Error fetching sessions:', error)
+        setSessionsWithDetails([])
+        setMounted(true)
+      }
+    }
 
-     setSessionsWithDetails(allSessions)
-      setMounted(true)
-   }, [groups, students])
+    if (students && groups) {
+      fetchSessions()
+    }
+  }, [students, groups])
 
   // Filter and sort sessions
   const filteredAndSortedSessions = useMemo(() => {
@@ -129,14 +138,14 @@ export default function CoursPage() {
       sessionDate.setHours(0, 0, 0, 0)
       
       const matchesType = (() => {
-        switch (filterType) {
-          case 'today': return sessionDate.getTime() === today.getTime()
-          case 'upcoming': return sessionDate.getTime() > today.getTime() && session.status !== 'cancelled'
-          case 'completed': return session.status === 'completed'
-          case 'cancelled': return session.status === 'cancelled'
-          default: return true
-        }
-      })()
+          switch (filterType) {
+            case 'today': return sessionDate.getTime() === today.getTime()
+            case 'upcoming': return sessionDate.getTime() > today.getTime() && session.status.toUpperCase() !== 'CANCELLED'
+            case 'completed': return session.status.toUpperCase() === 'COMPLETED'
+            case 'cancelled': return session.status.toUpperCase() === 'CANCELLED'
+            default: return true
+          }
+        })()
       
       return matchesSearch && matchesType
     })
@@ -167,18 +176,18 @@ export default function CoursPage() {
     if (!mounted) return { total: 0, completed: 0, upcoming: 0, cancelled: 0, revenue: 0 }
     
     const total = sessionsWithDetails.length
-    const completed = sessionsWithDetails.filter(s => s.status.toLowerCase() === 'completed').length
+    const completed = sessionsWithDetails.filter(s => s.status.toUpperCase() === 'COMPLETED').length
     const upcoming = sessionsWithDetails.filter(s => {
       const sessionDate = new Date(s.date)
-      return sessionDate > new Date() && s.status.toLowerCase() === 'scheduled'
+      return sessionDate > new Date() && s.status.toUpperCase() === 'SCHEDULED'
     }).length
-    const cancelled = sessionsWithDetails.filter(s => s.status.toLowerCase() === 'cancelled').length
+    const cancelled = sessionsWithDetails.filter(s => s.status.toUpperCase() === 'CANCELLED').length
     const revenue = sessionsWithDetails
-      .filter(s => s.status.toLowerCase() === 'completed')
+      .filter(s => s.status.toUpperCase() === 'COMPLETED')
       .reduce((total, session) => {
         const group = session.group
         if (!group?.paymentConfig) return total
-        const attendeeCount = session.attendances?.filter((a: any) => a.present).length || 0
+        const attendeeCount = session.attendance?.filter((att: any) => att.status === 'PRESENT').length || 0
         const pricePerStudent = group.paymentConfig.sessionFee || (group.paymentConfig.monthlyFee || 0) / 4
         return total + (attendeeCount * pricePerStudent)
       }, 0)
@@ -383,7 +392,11 @@ export default function CoursPage() {
             {filteredAndSortedSessions.map((sessionWithDetails: any, index: number) => {
               const { group, students } = sessionWithDetails
               
-              const statusInfo = statusConfig[sessionWithDetails.status as keyof typeof statusConfig]
+              const statusInfo = statusConfig[sessionWithDetails.status as keyof typeof statusConfig] || {
+                label: 'Inconnu',
+                color: 'bg-gray-100 text-gray-800',
+                icon: AlertCircle
+              }
               const StatusIcon = statusInfo.icon
               
               return (
@@ -450,7 +463,7 @@ export default function CoursPage() {
                         <div className="mb-4">
                           <div className="flex justify-between text-sm text-gray-600 mb-1">
                             <span>Présences</span>
-                            <span>{sessionWithDetails.attendees.filter(att => att.present).length}/{sessionWithDetails.attendees.length}</span>
+                            <span>{sessionWithDetails.attendees.filter((att: any) => att.present).length}/{sessionWithDetails.attendees.length}</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
@@ -471,13 +484,29 @@ export default function CoursPage() {
                       
                       {/* Actions */}
                       <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" className="flex-1">
-                          <Eye className="h-4 w-4 mr-1" />
-                          Voir
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => {
+                            setSelectedSession(sessionWithDetails)
+                            setShowContentModal(true)
+                          }}
+                        >
+                          <BookOpen className="h-4 w-4 mr-1" />
+                          Contenu
                         </Button>
-                        <Button variant="ghost" size="sm" className="flex-1">
-                          <Edit className="h-4 w-4 mr-1" />
-                          Modifier
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => {
+                            setSelectedSession(sessionWithDetails)
+                            setShowHistoryModal(true)
+                          }}
+                        >
+                          <History className="h-4 w-4 mr-1" />
+                          Historique
                         </Button>
                         <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
                           <Trash2 className="h-4 w-4" />
@@ -587,11 +616,25 @@ export default function CoursPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex items-center justify-end space-x-2">
-                                <Button variant="ghost" size="sm">
-                                  <Eye className="h-4 w-4" />
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedSession(sessionWithDetails)
+                                    setShowContentModal(true)
+                                  }}
+                                >
+                                  <BookOpen className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm">
-                                  <Edit className="h-4 w-4" />
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedSession(sessionWithDetails)
+                                    setShowHistoryModal(true)
+                                  }}
+                                >
+                                  <History className="h-4 w-4" />
                                 </Button>
                                 <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
                                   <Trash2 className="h-4 w-4" />
@@ -636,6 +679,29 @@ export default function CoursPage() {
               </Link>
             )}
           </motion.div>
+        )}
+
+        {/* Modals */}
+        {showContentModal && selectedSession && (
+          <CourseContentModal
+            session={selectedSession}
+            isOpen={showContentModal}
+            onClose={() => {
+              setShowContentModal(false)
+              setSelectedSession(null)
+            }}
+          />
+        )}
+
+        {showHistoryModal && selectedSession && (
+          <SessionHistoryModal
+            group={selectedSession.group}
+            isOpen={showHistoryModal}
+            onClose={() => {
+              setShowHistoryModal(false)
+              setSelectedSession(null)
+            }}
+          />
         )}
       </div>
     </div>

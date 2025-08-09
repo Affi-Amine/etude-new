@@ -155,12 +155,24 @@ export interface Session {
   date: Date;
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
   notes?: string;
+  // Course content fields
+  title?: string;
+  description?: string;
+  objectives?: string[];
+  materials?: string[];
+  homework?: string;
+  resources?: {
+    type: 'file' | 'link' | 'document';
+    name: string;
+    url: string;
+    size?: number;
+  }[];
   createdAt: Date;
   updatedAt: Date;
   // Relations
   group?: Group;
   attendance?: Attendance[];
-  // Legacy compatibility
+  // UI helpers
   attendees?: {
     studentId: string;
     present: boolean;

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Calendar, Users, BarChart3, Bell, ArrowRight, CheckCircle, Star } from 'lucide-react'
+import { Calendar, Users, BarChart3, Bell, ArrowRight, CheckCircle, Star, GraduationCap, BookOpen } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -120,72 +120,97 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 lg:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center lg:text-left"
-            >
-              <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
-                Gérez vos cours comme un
-                <span className="text-indigo-600 font-semibold"> professionnel</span>
-              </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                La plateforme de gestion de cours pour les enseignants tunisiens. 
-                Organisez, planifiez et suivez vos étudiants en toute simplicité.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link href="/auth/inscription">
-                  <Button className="btn-primary text-lg px-8 py-4">
-                    Commencer gratuitement
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Button variant="outline" className="text-lg px-8 py-4">
-                  Voir la démo
-                </Button>
-              </div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-300">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-900">Tableau de bord</h3>
-                    <div className="flex space-x-2">
-                      <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-indigo-600 p-4 rounded-lg text-white">
-                      <div className="text-2xl font-bold">24</div>
-                      <div className="text-sm opacity-90">Étudiants</div>
-                    </div>
-                    <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-4 rounded-lg text-white">
-                      <div className="text-2xl font-bold">12</div>
-                      <div className="text-sm opacity-90">Cours ce mois</div>
-                    </div>
-                  </div>
-                  <div className="h-20 bg-gray-100 rounded-lg flex items-end justify-around p-2">
-                    <div className="w-4 bg-indigo-500 rounded-t" style={{height: '60%'}}></div>
-                    <div className="w-4 bg-purple-500 rounded-t" style={{height: '80%'}}></div>
-                    <div className="w-4 bg-pink-500 rounded-t" style={{height: '40%'}}></div>
-                    <div className="w-4 bg-rose-500 rounded-t" style={{height: '90%'}}></div>
-                  </div>
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-20 w-72 h-72 bg-indigo-500/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500/30 rounded-full blur-3xl animate-pulse delay-2000"></div>
+        </div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mb-8"
+          >
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+              L'éducation
+              <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"> connectée</span>
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-200 mb-8 max-w-3xl mx-auto">
+              Une plateforme complète qui connecte enseignants, étudiants et parents pour une expérience éducative moderne et collaborative.
+            </p>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="mb-12"
+          >
+            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {/* Teacher Login */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full flex items-center justify-center">
+                   <GraduationCap className="h-8 w-8 text-white" />
+                 </div>
+                 <h3 className="text-xl font-semibold text-white mb-2">Enseignants</h3>
+                <p className="text-gray-200 text-sm mb-4">Gérez vos cours, étudiants et plannings</p>
+                <div className="space-y-2">
+                  <Link href="/auth/inscription">
+                    <Button className="w-full bg-white text-indigo-600 hover:bg-gray-100">
+                      S'inscrire
+                    </Button>
+                  </Link>
+                  <Link href="/auth/connexion">
+                    <Button variant="outline" className="w-full border-white text-white hover:bg-white hover:text-indigo-600">
+                      Se connecter
+                    </Button>
+                  </Link>
                 </div>
               </div>
-            </motion.div>
-          </div>
+
+              {/* Student Login */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                   <BookOpen className="h-8 w-8 text-white" />
+                 </div>
+                 <h3 className="text-xl font-semibold text-white mb-2">Étudiants</h3>
+                <p className="text-gray-200 text-sm mb-4">Accédez à vos cours et suivez vos progrès</p>
+                <div className="space-y-2">
+                  <Link href="/student/login">
+                    <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600">
+                      Accès étudiant
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-gray-300 text-center">
+                    Nouveau ? Utilisez le code d'invitation de votre professeur
+                  </p>
+                </div>
+              </div>
+
+              {/* Parent Access */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full flex items-center justify-center">
+                  <Users className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">Parents</h3>
+                <p className="text-gray-200 text-sm mb-4">Suivez les progrès de vos enfants</p>
+                <div className="space-y-2">
+                  <Link href="/parent/login">
+                    <Button className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600">
+                      Accès parent
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-gray-300 text-center">
+                     Demandez le code famille à votre enfant
+                   </p>
+                 </div>
+               </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -199,10 +224,10 @@ export default function Home() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Tout ce dont vous avez besoin
+              Une plateforme pour tous
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Des outils puissants et intuitifs pour transformer votre façon d'enseigner
+              Des outils adaptés à chaque utilisateur : enseignants, étudiants et parents
             </p>
           </motion.div>
           
@@ -288,10 +313,10 @@ export default function Home() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Ce que disent nos enseignants
+              Ce que dit notre communauté
             </h2>
             <p className="text-xl text-gray-600">
-              Rejoignez des centaines d'enseignants satisfaits
+              Rejoignez des centaines d'enseignants, étudiants et parents satisfaits
             </p>
           </motion.div>
           
@@ -370,17 +395,25 @@ export default function Home() {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              Prêt à transformer votre enseignement ?
+              Prêt à rejoindre notre communauté éducative ?
             </h2>
             <p className="text-xl text-indigo-100 mb-8">
-              Rejoignez LessonPro aujourd'hui et découvrez une nouvelle façon d'enseigner
+              Découvrez une nouvelle façon d'apprendre et d'enseigner ensemble
             </p>
-            <Link href="/auth/inscription">
-              <Button className="bg-white text-indigo-600 hover:bg-gray-100 text-lg px-8 py-4">
-                Commencer maintenant
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/auth/inscription">
+                <Button className="bg-white text-indigo-600 hover:bg-gray-100 text-lg px-8 py-4">
+                  Enseignants - Commencer
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link href="/student/login">
+                <Button variant="outline" className="border-white text-white hover:bg-white hover:text-indigo-600 text-lg px-8 py-4">
+                  Étudiants - Se connecter
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -397,7 +430,7 @@ export default function Home() {
                 <span className="text-xl font-bold">LessonPro</span>
               </div>
               <p className="text-gray-400">
-                La plateforme de gestion de cours pour les enseignants tunisiens.
+                La plateforme éducative qui connecte enseignants, étudiants et parents.
               </p>
             </div>
             <div>

@@ -14,23 +14,40 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
-export function formatDate(date: Date): string {
-  if (!date || isNaN(date.getTime())) {
+export function formatDate(date: Date | string): string {
+  if (!date) {
     return 'Date invalide'
   }
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+  
+  if (isNaN(dateObj.getTime())) {
+    return 'Date invalide'
+  }
+  
   return new Intl.DateTimeFormat('fr-FR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
-  }).format(date)
+  }).format(dateObj)
 }
 
-export function formatDateLong(date: Date): string {
+export function formatDateLong(date: Date | string): string {
+  if (!date) {
+    return 'Date invalide'
+  }
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+  
+  if (isNaN(dateObj.getTime())) {
+    return 'Date invalide'
+  }
+  
   return new Intl.DateTimeFormat('fr-FR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  }).format(date)
+  }).format(dateObj)
 }
 
 export function formatTime(time: Date | string | undefined): string {
@@ -47,12 +64,22 @@ export function formatTime(time: Date | string | undefined): string {
   }).format(time)
 }
 
-export function formatDateTime(date: Date): string {
+export function formatDateTime(date: Date | string): string {
   return `${formatDate(date)} à ${formatTime(date)}`
 }
 
-export function formatDateForInput(date: Date): string {
-  return date.toISOString().split('T')[0]
+export function formatDateForInput(date: Date | string): string {
+  if (!date) {
+    return ''
+  }
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date
+  
+  if (isNaN(dateObj.getTime())) {
+    return ''
+  }
+  
+  return dateObj.toISOString().split('T')[0]
 }
 
 export function getInitials(name: string): string {
