@@ -19,7 +19,8 @@ import {
   XCircle,
   MoreHorizontal,
   Settings,
-  MapPin
+  MapPin,
+  UserPlus
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -39,6 +40,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 
 // Removed client-side payment calculation - using simplified calculation
@@ -46,9 +53,11 @@ import { formatCurrency, formatDate, getGroupAttendanceRate, formatWeeklySchedul
 import type { Group, Student } from '@/lib/types'
 import { useGroups } from '@/hooks/useGroups'
 import { useStudents } from '@/hooks/useStudents'
+import { useMultiplePaymentStatuses } from '@/hooks/usePaymentStatus'
 import NewGroupCreationModal from '@/components/modals/new-group-creation-modal'
 import GroupDetailModal from '@/components/modals/group-detail-modal'
 import AddStudentModal from '@/components/modals/add-student-modal'
+import GroupInvitationManager from '@/components/invitations/GroupInvitationManager'
 
 type FilterType = 'all' | 'active' | 'inactive' | 'needs-payment'
 type SortType = 'name' | 'students' | 'created' | 'revenue'
@@ -62,6 +71,10 @@ export default function GroupsPage() {
   const { groups, loading: groupsLoading, createGroup, updateGroup, deleteGroup, addStudentsToGroup } = useGroups()
   const { students, loading: studentsLoading, createStudent, fetchStudents } = useStudents()
   
+  // Get payment statuses for all students
+  const studentIds = students?.map(s => s.id) || []
+  const { paymentStatuses, loading: paymentLoading } = useMultiplePaymentStatuses(studentIds)
+  
   // Global stats state
   const [globalStats, setGlobalStats] = useState({ totalRevenue: 0 })
   
@@ -69,8 +82,10 @@ export default function GroupsPage() {
   const [isCreationModalOpen, setIsCreationModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false)
+  const [isInvitationModalOpen, setIsInvitationModalOpen] = useState(false)
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null)
   const [editingGroup, setEditingGroup] = useState<Group | null>(null)
+  const [invitationGroup, setInvitationGroup] = useState<Group | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   // Fetch global stats for total revenue
@@ -181,6 +196,11 @@ export default function GroupsPage() {
     setIsDetailModalOpen(true)
   }
 
+  const handleInviteStudents = (group: Group) => {
+    setInvitationGroup(group)
+    setIsInvitationModalOpen(true)
+  }
+
   const handleAddStudentsToGroup = async (studentIds: string[]) => {
     if (selectedGroup) {
       try {
@@ -246,21 +266,22 @@ export default function GroupsPage() {
       )
       const allPaymentRecords = groupStudents.flatMap(student => student.payments || [])
       
-      // Calculate attendance rate more accurately
-       const completedSessions = groupSessions.filter(session => session.status === 'COMPLETED')
-       let attendanceRate = 0
-       if (completedSessions.length > 0 && groupStudents.length > 0) {
-         const totalPossibleAttendances = completedSessions.length * groupStudents.length
-         const actualAttendances = completedSessions.reduce((total, session) => {
-           const sessionAttendances = session.attendance?.filter((att: any) => att.status === 'PRESENT').length || 0
-           return total + sessionAttendances
-         }, 0)
-         attendanceRate = totalPossibleAttendances > 0 ? (actualAttendances / totalPossibleAttendances) * 100 : 0
-       }
+      // Calculate attendance rate using the same logic as getGroupAttendanceRate
+      const attendanceRate = getGroupAttendanceRate(groupSessions, group.id)
+      
+      // Calculate students needing payment using correct payment status logic
+      const studentsNeedingPayment = groupStudents.filter(student => {
+        const studentPaymentData = paymentStatuses[student.id]
+        // Handle cases where payment status calculation failed due to missing config
+        if (!studentPaymentData) {
+          return false // Skip students with failed payment status calculation
+        }
+        return studentPaymentData?.overallStatus === 'EN_ATTENTE' || studentPaymentData?.overallStatus === 'EN_RETARD'
+      }).length
       
       const stats = {
         totalRevenue: allPaymentRecords.reduce((sum, payment) => sum + (payment.amount || 0), 0),
-        studentsNeedingPayment: 0, // Will be calculated separately
+        studentsNeedingPayment,
         totalSessions: groupSessions.length,
         totalStudents: groupStudents.length,
         attendanceRate: Math.round(attendanceRate)
@@ -274,7 +295,7 @@ export default function GroupsPage() {
         isActive: group.isActive
       }
     })
-  }, [groups, students])
+  }, [groups, students, paymentStatuses])
 
   // Filter and sort groups
   const filteredAndSortedGroups = useMemo(() => {
@@ -292,14 +313,9 @@ export default function GroupsPage() {
               return group.students?.some((gs: any) => {
                 const student = students.find(s => s.id === gs.studentId);
                 if (!student) return false;
-                // Simplified check - assume students with no recent payments need payment
-                const recentPayments = student.payments?.filter((p: any) => {
-                  const paymentDate = new Date(p.createdAt || p.date);
-                  const thirtyDaysAgo = new Date();
-                  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                  return paymentDate > thirtyDaysAgo;
-                }) || [];
-                return recentPayments.length === 0;
+                // Use correct payment status logic
+                const studentPaymentData = paymentStatuses[student.id]
+                return studentPaymentData?.overallStatus === 'EN_ATTENTE' || studentPaymentData?.overallStatus === 'EN_RETARD'
               }) || false;
           default:
             return true
@@ -594,24 +610,12 @@ export default function GroupsPage() {
                       </div>
                     )}
                     
-                    {/* Attendance Rate */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Taux de présence</span>
-                        <span className="font-medium">{Math.round(stats.attendanceRate)}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${stats.attendanceRate}%` }}
-                        />
-                      </div>
-                    </div>
+
                   </CardContent>
                   
                   {/* Actions */}
                   <div className="border-t border-gray-100 p-4">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mb-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -639,6 +643,15 @@ export default function GroupsPage() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                      onClick={() => handleInviteStudents(group)}
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Inviter des étudiants
+                    </Button>
                   </div>
                 </Card>
               </motion.div>
@@ -680,7 +693,6 @@ export default function GroupsPage() {
         }}
         onSubmit={editingGroup ? handleUpdateGroup : handleCreateGroup}
         editingGroup={editingGroup}
-        availableStudents={students}
       />
 
       <GroupDetailModal
@@ -705,6 +717,23 @@ export default function GroupsPage() {
           onCreateStudent={handleCreateStudent}
         />
       )}
+
+      {/* Group Invitation Modal */}
+      <Dialog open={isInvitationModalOpen} onOpenChange={setIsInvitationModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="text-xl font-semibold">Inviter des étudiants</DialogTitle>
+          </DialogHeader>
+          {invitationGroup && (
+            <div className="mt-4">
+              <GroupInvitationManager
+                groupId={invitationGroup.id}
+                groupName={invitationGroup.name}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -63,6 +63,12 @@ export default function GroupDetailModal({
     }
   }
   
+  const groupSessions = useMemo(() => {
+    if (!group) return []
+    return (group.sessions || [])
+      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }, [group])
+
   // Calculate payment statuses asynchronously using API
   useMemo(() => {
     if (!group || !groupStudents.length) {
@@ -79,25 +85,27 @@ export default function GroupDetailModal({
               throw new Error('Failed to fetch payment status')
             }
             const paymentStatus = await response.json()
+            
             return {
               ...student,
               paymentStatus: {
                 status: paymentStatus.currentStatus?.toLowerCase() || 'unknown',
                 amount: paymentStatus.amountDue || 0,
-                currentCycleSessions: paymentStatus.totalSessionsInCycle || 0,
-                attendedSessions: paymentStatus.attendedSessions || 0,
+                currentCycleSessions: group.paymentThreshold || 4,
+                attendedSessions: paymentStatus.attendedSessions || 0, // Use attended sessions from payment status
                 nextPaymentAmount: paymentStatus.amountDue || 0,
                 statusMessage: getStatusMessage(paymentStatus.currentStatus, paymentStatus.totalSessionsInCycle)
               }
             }
           } catch (error) {
             console.error('Error calculating payment status for student:', student.id, error)
+            
             return {
               ...student,
               paymentStatus: { 
                 status: 'unknown', 
                 amount: 0,
-                currentCycleSessions: 0,
+                currentCycleSessions: group.paymentThreshold || 4,
                 attendedSessions: 0,
                 nextPaymentAmount: 0,
                 statusMessage: 'Erreur de calcul'
@@ -110,24 +118,23 @@ export default function GroupDetailModal({
     }
 
     calculateStatuses()
-  }, [group, groupStudents])
-
-  const groupSessions = useMemo(() => {
-    if (!group) return []
-    return (group.sessions || [])
-      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [group])
+  }, [group, groupStudents, groupSessions])
 
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
+      case 'a_jour':
         return <Badge className="bg-green-100 text-green-800">À jour</Badge>
+      case 'pending':
+      case 'en_attente':
+        return <Badge className="bg-yellow-100 text-yellow-800">En attente</Badge>
+      case 'overdue':
+      case 'en_retard':
+        return <Badge className="bg-red-100 text-red-800">En retard</Badge>
       case 'approaching':
         return <Badge className="bg-yellow-100 text-yellow-800">Proche échéance</Badge>
       case 'due':
         return <Badge variant="destructive">Paiement dû</Badge>
-      case 'overdue':
-        return <Badge className="bg-red-100 text-red-800">En retard</Badge>
       default:
         return <Badge variant="secondary">Inconnu</Badge>
     }
@@ -246,7 +253,7 @@ export default function GroupDetailModal({
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-600">Sessions</p>
-                        <p className="text-2xl font-bold text-gray-900">{groupSessions.length}</p>
+                        <p className="text-2xl font-bold text-gray-900">{group.paymentThreshold || 4}</p>
                       </div>
                       <Calendar className="h-8 w-8 text-green-600" />
                     </div>
@@ -366,11 +373,11 @@ export default function GroupDetailModal({
                         
                         <div className="flex items-center space-x-4">
                           <div className="text-right">
-                            <p className="text-sm text-gray-600">Sessions</p>
-                            <p className="font-medium">
-                              {student.paymentStatus?.currentCycleSessions || 0}/4
-                            </p>
-                          </div>
+                        <p className="text-sm text-gray-600">Sessions</p>
+                        <p className="font-medium">
+                          {student.paymentStatus?.attendedSessions || 0} / {group.paymentThreshold || 4}
+                        </p>
+                      </div>
                           
                           <div className="text-right">
                             <p className="text-sm text-gray-600">Statut</p>

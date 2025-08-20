@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -12,18 +10,20 @@ function generateFamilyCode(): string {
 // POST /api/student/family-code - Generate family code for parent connection
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== 'STUDENT') {
+    const body = await request.json()
+    const { studentId } = body
+
+    if (!studentId) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Student ID is required' },
+        { status: 400 }
       )
     }
 
     // Find student profile
     const student = await prisma.student.findFirst({
       where: {
-        userId: session.user.id,
+        id: studentId,
         isActive: true
       },
       include: {
@@ -54,6 +54,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check if student already has an active family code that hasn't been used
+    // Since parentUserId is required, we'll check for unused codes differently
+    const existingUnusedCode = await prisma.parentConnection.findFirst({
+      where: {
+        studentId: student.id,
+        isActive: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    // For now, we'll always generate a new code since the schema requires parentUserId
+    // In a real implementation, you might want to modify the schema to allow null parentUserId
+
+    // Return existing code if found (commented out for now due to schema constraints)
+    // if (existingUnusedCode) {
+    //   return NextResponse.json({
+    //     success: true,
+    //     familyCode: existingUnusedCode.familyCode,
+    //     student: {
+    //       id: student.id,
+    //       name: student.name,
+    //       classe: student.classe,
+    //       lycee: student.lycee,
+    //       teacher: student.teacher,
+    //       groups: student.groups.map(gs => gs.group)
+    //     },
+    //     joinUrl: `${process.env.NEXTAUTH_URL}/parent/join/${existingUnusedCode.familyCode}`
+    //   })
+    // }
+
     // Generate unique family code
     let familyCode: string
     let isUnique = false
@@ -75,16 +107,41 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Update the student with the new family code
+    const updatedStudent = await prisma.student.update({
+      where: { id: student.id },
+      data: { familyCode },
+      include: {
+        teacher: {
+          select: {
+            name: true,
+            email: true
+          }
+        },
+        groups: {
+          where: { isActive: true },
+          include: {
+            group: {
+              select: {
+                name: true,
+                subject: true
+              }
+            }
+          }
+        }
+      }
+    })
+
     return NextResponse.json({
       success: true,
       familyCode,
       student: {
-        id: student.id,
-        name: student.name,
-        classe: student.classe,
-        lycee: student.lycee,
-        teacher: student.teacher,
-        groups: student.groups.map(gs => gs.group)
+        id: updatedStudent.id,
+        name: updatedStudent.name,
+        classe: updatedStudent.classe,
+        lycee: updatedStudent.lycee,
+        teacher: updatedStudent.teacher,
+        groups: updatedStudent.groups.map(gs => gs.group)
       },
       joinUrl: `${process.env.NEXTAUTH_URL}/parent/join/${familyCode}`
     })
@@ -101,18 +158,20 @@ export async function POST(request: NextRequest) {
 // GET /api/student/family-code - Get existing family connections
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== 'STUDENT') {
+    const { searchParams } = new URL(request.url)
+    const studentId = searchParams.get('studentId')
+
+    if (!studentId) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Student ID is required' },
+        { status: 400 }
       )
     }
 
     // Find student profile
     const student = await prisma.student.findFirst({
       where: {
-        userId: session.user.id,
+        id: studentId,
         isActive: true
       }
     })
@@ -145,8 +204,12 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Get the most recent family code if any
+    const latestConnection = connections[0]
+    
     return NextResponse.json({
       success: true,
+      familyCode: latestConnection?.familyCode || null,
       connections: connections.map(conn => ({
         id: conn.id,
         relationship: conn.relationship,

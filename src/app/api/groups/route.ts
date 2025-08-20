@@ -54,6 +54,9 @@ export async function GET() {
       },
       include: {
         students: {
+          where: {
+            isActive: true
+          },
           include: {
             student: {
               select: {
@@ -85,7 +88,11 @@ export async function GET() {
         },
         _count: {
           select: {
-            students: true,
+            students: {
+              where: {
+                isActive: true
+              }
+            },
             sessions: true
           }
         }

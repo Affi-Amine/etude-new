@@ -1,14 +1,17 @@
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcryptjs')
+
 const prisma = new PrismaClient()
 
 async function fixStudentPassword() {
   try {
-    console.log('🔐 Fixing student password...')
+    console.log('🔧 Fixing Amine student password...')
     
-    // Find the user
+    // Find Amine's user account
     const user = await prisma.user.findUnique({
-      where: { email: 'affi.amin.work@gmail.com' }
+      where: {
+        email: 'affi.amin.prof@gmail.com'
+      }
     })
     
     if (!user) {
@@ -16,115 +19,26 @@ async function fixStudentPassword() {
       return
     }
     
-    console.log('👤 User found:', {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      hasPassword: !!user.password
-    })
+    console.log('✅ User found:', user.email)
     
-    if (!user.password) {
-      console.log('⚠️ User has no password, creating one...')
-      
-      const password = 'password123'
-      const hashedPassword = await bcrypt.hash(password, 12)
-      
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { password: hashedPassword }
-      })
-      
-      console.log('✅ Password created successfully!')
-      console.log('🔑 Login credentials:')
-      console.log('   Email:', user.email)
-      console.log('   Password:', password)
-    } else {
-      console.log('✅ User already has a password')
-      
-      // Test if the password is 'password123'
-      const isValidPassword = await bcrypt.compare('password123', user.password)
-      if (isValidPassword) {
-        console.log('✅ Password is "password123"')
-      } else {
-        console.log('⚠️ Password is not "password123", updating...')
-        
-        const password = 'password123'
-        const hashedPassword = await bcrypt.hash(password, 12)
-        
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { password: hashedPassword }
-        })
-        
-        console.log('✅ Password updated to "password123"')
-      }
-    }
+    // Hash the correct password
+    const hashedPassword = await bcrypt.hash('test123', 12)
     
-    // Now test the login
-    console.log('\n🧪 Testing login with updated credentials...')
-    
-    const student = await prisma.student.findFirst({
+    // Update the password
+    await prisma.user.update({
       where: {
-        email: user.email,
-        isActive: true
+        id: user.id
       },
-      include: {
-        user: true,
-        groups: {
-          where: { isActive: true },
-          include: {
-            group: {
-              select: {
-                id: true,
-                name: true,
-                subject: true,
-                scheduleDay: true,
-                scheduleTime: true
-              }
-            }
-          }
-        }
+      data: {
+        password: hashedPassword
       }
     })
     
-    if (!student) {
-      console.log('❌ Student not found or inactive')
-      return
-    }
-    
-    console.log('✅ Student found:', {
-      id: student.id,
-      name: student.name,
-      email: student.email,
-      isActive: student.isActive,
-      hasUser: !!student.user,
-      groupsCount: student.groups.length
-    })
-    
-    if (!student.user) {
-      console.log('❌ Student has no user account')
-      return
-    }
-    
-    const isPasswordValid = await bcrypt.compare('password123', student.user.password)
-    console.log('🔑 Password validation:', isPasswordValid ? '✅ Valid' : '❌ Invalid')
-    
-    if (isPasswordValid) {
-      console.log('\n🎉 Login should work now!')
-      console.log('📋 Login details:')
-      console.log('   URL: http://localhost:3001/student/login')
-      console.log('   Email:', student.email)
-      console.log('   Password: password123')
-      
-      console.log('\n📚 Student groups:')
-      student.groups.forEach((groupStudent, index) => {
-        console.log(`   ${index + 1}. ${groupStudent.group.name} (${groupStudent.group.subject})`)
-      })
-    }
+    console.log('✅ Password updated successfully for:', user.email)
+    console.log('🔑 New password: test123')
     
   } catch (error) {
-    console.error('❌ Error fixing student password:', error)
+    console.error('❌ Error fixing password:', error)
   } finally {
     await prisma.$disconnect()
   }

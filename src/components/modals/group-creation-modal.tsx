@@ -54,7 +54,7 @@ export default function GroupCreationModal({
     schedule: {
       day: editingGroup?.scheduleDay || '',
       time: editingGroup?.scheduleTime || '',
-      duration: editingGroup?.scheduleDuration || 60
+      duration: editingGroup?.scheduleDuration || 120
     },
     paymentConfig: {
       monthlyFee: editingGroup?.paymentConfig?.monthlyFee || editingGroup?.monthlyFee || 0,
@@ -104,7 +104,7 @@ export default function GroupCreationModal({
         schedule: {
           day: '',
           time: '',
-          duration: 60
+          duration: 120
         },
         paymentConfig: {
           monthlyFee: 0,

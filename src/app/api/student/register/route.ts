@@ -4,36 +4,55 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
 const studentRegisterSchema = z.object({
-  invitationCode: z.string().length(6),
-  name: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().min(8).max(15), // More flexible phone validation
-  password: z.string().min(6),
-  classe: z.string().min(1),
-  lycee: z.string().min(1),
-  level: z.string().optional(),
+  invitationCode: z.string().length(6, 'Le code d\'invitation doit contenir exactement 6 caractères'),
+  name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères').max(100, 'Le nom ne peut pas dépasser 100 caractères'),
+  email: z.string().email('Format d\'email invalide').min(1, 'L\'email est requis'),
+  phone: z.string().min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres').max(15, 'Le numéro de téléphone ne peut pas dépasser 15 chiffres').regex(/^[0-9+\-\s()]+$/, 'Le numéro de téléphone contient des caractères invalides'),
+  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères').max(100, 'Le mot de passe ne peut pas dépasser 100 caractères'),
+  classe: z.string().min(1, 'La classe est requise').max(50, 'La classe ne peut pas dépasser 50 caractères'),
+  lycee: z.string().min(1, 'Le lycée est requis').max(100, 'Le lycée ne peut pas dépasser 100 caractères'),
+  level: z.string().max(50, 'Le niveau ne peut pas dépasser 50 caractères').optional(),
 })
+
+// Function to sanitize input data
+function sanitizeInput(input: string): string {
+  return input
+    .replace(/[<>"'&]/g, (match) => {
+      const entities: { [key: string]: string } = {
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        '&': '&amp;'
+      }
+      return entities[match] || match
+    })
+    .trim()
+}
 
 // POST /api/student/register - Student self-registration with invitation code
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const {
-      invitationCode,
-      name,
-      email,
-      phone,
-      password,
-      classe,
-      lycee,
-      level
-    } = studentRegisterSchema.parse(body)
+    const validatedData = studentRegisterSchema.parse(body)
+    
+    // Sanitize input data
+    const sanitizedData = {
+      invitationCode: validatedData.invitationCode.trim(),
+      name: sanitizeInput(validatedData.name),
+      email: validatedData.email.toLowerCase().trim(),
+      phone: validatedData.phone.replace(/\s/g, ''), // Remove spaces
+      password: validatedData.password, // Don't sanitize password
+      classe: sanitizeInput(validatedData.classe),
+      lycee: sanitizeInput(validatedData.lycee),
+      level: validatedData.level ? sanitizeInput(validatedData.level) : ''
+    }
 
     // Find and validate invitation
-    const invitation = await prisma.groupInvitation.findUnique({
-      where: {
-        code: invitationCode,
-      },
+     const invitation = await prisma.groupInvitation.findUnique({
+       where: {
+         code: sanitizedData.invitationCode,
+       },
       include: {
         group: {
           select: {
@@ -75,9 +94,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    })
+     const existingUser = await prisma.user.findUnique({
+       where: { email: sanitizedData.email }
+     })
 
     if (existingUser) {
       return NextResponse.json(
@@ -87,9 +106,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if student already exists with this email
-    const existingStudent = await prisma.student.findFirst({
-      where: { email }
-    })
+     const existingStudent = await prisma.student.findFirst({
+       where: { email: sanitizedData.email }
+     })
 
     if (existingStudent) {
       return NextResponse.json(
@@ -99,36 +118,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12)
+     const hashedPassword = await bcrypt.hash(sanitizedData.password, 12)
 
     // Create user account and student profile in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create user account
-      const user = await tx.user.create({
-        data: {
-          email,
-          name,
-          password: hashedPassword,
-          role: 'STUDENT',
-          status: 'APPROVED', // Auto-approve students who register with valid codes
-          phone,
-        }
-      })
+       const user = await tx.user.create({
+         data: {
+           email: sanitizedData.email,
+           name: sanitizedData.name,
+           password: hashedPassword,
+           role: 'STUDENT',
+           status: 'APPROVED', // Auto-approve students who register with valid codes
+           phone: sanitizedData.phone,
+         }
+       })
 
       // Create student profile
-      const student = await tx.student.create({
-        data: {
-          teacherId: invitation.group.teacherId,
-          userId: user.id,
-          name,
-          email,
-          phone,
-          classe,
-          lycee,
-          level: level || '',
-          enrollmentDate: new Date(),
-        }
-      })
+       const student = await tx.student.create({
+         data: {
+           teacherId: invitation.group.teacherId,
+           userId: user.id,
+           name: sanitizedData.name,
+           email: sanitizedData.email,
+           phone: sanitizedData.phone,
+           classe: sanitizedData.classe,
+           lycee: sanitizedData.lycee,
+           level: sanitizedData.level,
+           enrollmentDate: new Date(),
+         }
+       })
 
       // Add student to the group
       await tx.groupStudent.create({
@@ -172,15 +191,28 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Student registration error:', error)
     
+    // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid input data', details: error.issues },
+        { 
+          error: 'Données invalides', 
+          details: error.errors.map(e => e.message)
+        },
         { status: 400 }
       )
     }
-
+    
+    // Handle Prisma unique constraint errors
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      return NextResponse.json(
+        { error: 'Un compte avec ces informations existe déjà' },
+        { status: 400 }
+      )
+    }
+    
+    // Generic error (don't expose internal details)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Une erreur est survenue lors de l\'inscription' },
       { status: 500 }
     )
   }

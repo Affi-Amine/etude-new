@@ -17,9 +17,11 @@ export default function ParentLoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showFamilyCodeInput, setShowFamilyCodeInput] = useState(false)
+  const [familyCode, setFamilyCode] = useState('')
   
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: ''
   })
 
@@ -28,7 +30,7 @@ export default function ParentLoginPage() {
     setLoading(true)
     setError('')
 
-    if (!formData.email || !formData.password) {
+    if (!formData.identifier || !formData.password) {
       setError('Veuillez remplir tous les champs')
       setLoading(false)
       return
@@ -41,7 +43,7 @@ export default function ParentLoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.email,
+          identifier: formData.identifier,
           password: formData.password,
         }),
       })
@@ -67,6 +69,17 @@ export default function ParentLoginPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleFamilyCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!familyCode.trim()) {
+      setError('Veuillez entrer un code famille valide')
+      return
+    }
+    
+    // Redirect to the join page with the family code
+    router.push(`/parent/join/${familyCode.trim()}`)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
       <motion.div
@@ -88,13 +101,13 @@ export default function ParentLoginPage() {
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="identifier">Email ou Téléphone</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="votre.email@exemple.com"
+                  id="identifier"
+                  type="text"
+                  value={formData.identifier}
+                  onChange={(e) => handleInputChange('identifier', e.target.value)}
+                  placeholder="votre.email@exemple.com ou 28108923"
                   required
                   className="transition-all duration-200 focus:ring-2 focus:ring-indigo-500"
                 />
@@ -163,10 +176,56 @@ export default function ParentLoginPage() {
                 </div>
               </div>
 
-              <div className="text-center space-y-2">
+              <div className="text-center space-y-3">
                 <p className="text-sm text-gray-600">
                   Pas encore inscrit?
                 </p>
+                
+                {!showFamilyCodeInput ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowFamilyCodeInput(true)}
+                    className="w-full border-indigo-300 text-indigo-600 hover:bg-indigo-50"
+                  >
+                    S'inscrire avec un code famille
+                  </Button>
+                ) : (
+                  <form onSubmit={handleFamilyCodeSubmit} className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="familyCode" className="text-sm">Code famille</Label>
+                      <Input
+                        id="familyCode"
+                        type="text"
+                        value={familyCode}
+                        onChange={(e) => setFamilyCode(e.target.value)}
+                        placeholder="Entrez le code famille"
+                        className="transition-all duration-200 focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        type="submit"
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        Continuer
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowFamilyCodeInput(false)
+                          setFamilyCode('')
+                          setError('')
+                        }}
+                        className="flex-1"
+                      >
+                        Annuler
+                      </Button>
+                    </div>
+                  </form>
+                )}
+                
                 <p className="text-xs text-gray-500">
                   Demandez le code famille à votre enfant pour vous inscrire
                 </p>

@@ -186,9 +186,18 @@ export function getPaymentStatusText(status: string): string {
     'paid': 'Payé',
     'pending': 'En attente',
     'overdue': 'En retard',
-    'overflow': 'Dépassement'
+    'overflow': 'Dépassement',
+    'due': 'Dû',
+    'approaching': 'Approche',
+    'A_JOUR': 'À jour',
+    'EN_ATTENTE': 'En attente',
+    'EN_RETARD': 'En retard',
+    'PAID': 'Payé',
+    'PENDING': 'En attente',
+    'OVERDUE': 'En retard',
+    'UP_TO_DATE': 'À jour'
   }
-  return statusTexts[status] || status
+  return statusTexts[status] || 'Inconnu'
 }
 
 export function getPaymentStatusColor(status: string): string {
@@ -196,7 +205,16 @@ export function getPaymentStatusColor(status: string): string {
     'paid': 'text-green-600 bg-green-50',
     'pending': 'text-yellow-600 bg-yellow-50',
     'overdue': 'text-red-600 bg-red-50',
-    'overflow': 'text-purple-600 bg-purple-50'
+    'overflow': 'text-purple-600 bg-purple-50',
+    'due': 'text-red-600 bg-red-50',
+    'approaching': 'text-yellow-600 bg-yellow-50',
+    'A_JOUR': 'text-green-600 bg-green-50',
+    'EN_ATTENTE': 'text-yellow-600 bg-yellow-50',
+    'EN_RETARD': 'text-red-600 bg-red-50',
+    'PAID': 'text-green-600 bg-green-50',
+    'PENDING': 'text-yellow-600 bg-yellow-50',
+    'OVERDUE': 'text-red-600 bg-red-50',
+    'UP_TO_DATE': 'text-green-600 bg-green-50'
   }
   return colors[status] || 'text-gray-600 bg-gray-50'
 }

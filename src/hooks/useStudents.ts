@@ -88,15 +88,16 @@ export function useStudents() {
     }
   }
 
-  // Delete a student (soft delete)
+  // Delete a student
   const deleteStudent = async (id: string) => {
     try {
-      const response = await fetch(`/api/students/${id}`, {
+      const response = await fetch(`/api/students?id=${id}`, {
         method: 'DELETE',
       })
       
       if (!response.ok) {
-        throw new Error('Failed to delete student')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete student')
       }
       
       setStudents(prev => prev.filter(s => s.id !== id))

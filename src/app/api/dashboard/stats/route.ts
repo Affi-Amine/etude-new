@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
       averageAttendanceRate: Math.round(averageAttendanceRate),
       studentsWithPaymentStatus,
       upcomingSessionsList: upcomingSessions.slice(0, 10),
-      recentSessions: recentSessions.slice(0, 5),
+      recentSessions: recentSessions.slice(0, 10),
       students: allStudents,
       groups,
       sessions,

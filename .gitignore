@@ -105,3 +105,22 @@ prisma/migrations/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Testing scripts and temporary files
+test-*.js
+check-*.js
+create-*.js
+debug-*.js
+fix-*.js
+find-*.js
+auth-test.json
+cookies.txt
+*.sh
+tsconfig.tsbuildinfo
+
+# Uploads directory
+uploads/
+
+# Documentation files (optional - remove if you want to keep them)
+*.md
+!README.md

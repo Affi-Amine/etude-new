@@ -29,7 +29,17 @@ export async function calculateStudentPaymentStatus(
   });
 
   if (!group || !group.sessionFee || !group.paymentThreshold) {
-    throw new Error('Configuration de paiement manquante pour le groupe');
+    console.warn(`Configuration de paiement manquante pour le groupe ${groupId}`);
+    // Return default status instead of throwing error
+    return {
+      studentId,
+      groupId,
+      attendedSessions: 0,
+      totalSessionsInCycle: 0,
+      currentStatus: 'A_JOUR',
+      amountDue: 0,
+      nextDueDate: undefined
+    };
   }
 
   // Récupérer toutes les présences de l'étudiant pour ce groupe
@@ -238,7 +248,8 @@ export async function createInitialPendingPayment(
   });
 
   if (!group || !group.sessionFee || !group.paymentThreshold) {
-    throw new Error('Configuration de paiement manquante pour le groupe');
+    console.warn(`Configuration de paiement manquante pour le groupe ${groupId}`);
+    return; // Skip payment creation for groups without proper config
   }
 
   // Vérifier s'il existe déjà un paiement pour cet étudiant

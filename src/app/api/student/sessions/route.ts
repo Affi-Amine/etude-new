@@ -14,32 +14,36 @@ const querySchema = z.object({
 // GET /api/student/sessions - Get sessions for a student
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const { searchParams } = new URL(request.url)
     const { studentId, groupId, status, limit } = querySchema.parse({
       studentId: searchParams.get('studentId'),
       groupId: searchParams.get('groupId'),
       status: searchParams.get('status'),
-      limit: searchParams.get('limit') || '50',
+      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
     })
 
-    // For student users, get their student profile
     let targetStudentId = studentId
-    if (session.user.role === 'STUDENT') {
-      const studentProfile = await prisma.student.findFirst({
-        where: { userId: session.user.id }
-      })
+    
+    // If no studentId provided, try to get from NextAuth session
+    if (!targetStudentId) {
+      const session = await getServerSession(authOptions)
       
-      if (!studentProfile) {
-        return NextResponse.json({ error: 'Student profile not found' }, { status: 404 })
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized - studentId required or valid session needed' }, { status: 401 })
       }
-      
-      targetStudentId = studentProfile.id
+
+      // For student users, get their student profile
+      if (session.user.role === 'STUDENT') {
+        const studentProfile = await prisma.student.findFirst({
+          where: { userId: session.user.id }
+        })
+        
+        if (!studentProfile) {
+          return NextResponse.json({ error: 'Student profile not found' }, { status: 404 })
+        }
+        
+        targetStudentId = studentProfile.id
+      }
     }
 
     if (!targetStudentId) {

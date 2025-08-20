@@ -38,8 +38,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useStudents } from '@/hooks/useStudents'
 import { useGroups } from '@/hooks/useGroups'
+import { useMultiplePaymentStatuses } from '@/hooks/usePaymentStatus'
+import { toast } from 'sonner'
 // Removed client-side payment calculation - using simplified calculation
 import { formatCurrency, getInitials, getPaymentStatusText, getPaymentStatusColor } from '@/lib/utils'
 import type { Student } from '@/lib/types'
@@ -52,10 +64,17 @@ export default function EtudiantsPage() {
   const [filterType, setFilterType] = useState<FilterType>('all')
   const [sortType, setSortType] = useState<SortType>('name')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // API hooks
-  const { students, loading: studentsLoading } = useStudents()
+  const { students, loading: studentsLoading, deleteStudent } = useStudents()
   const { groups, loading: groupsLoading } = useGroups()
+
+  // Get payment statuses for all students
+  const studentIds = students?.map(s => s.id) || []
+  const { paymentStatuses, loading: paymentLoading } = useMultiplePaymentStatuses(studentIds)
 
   // Calculate student data with payment status
   const studentsWithPaymentStatus = useMemo(() => {
@@ -65,45 +84,60 @@ export default function EtudiantsPage() {
       const studentGroups = groups.filter(group => 
         group.students?.some((gs: any) => gs.studentId === student.id)
       )
-      const paymentStatuses = studentGroups.map(group => {
-        const studentSessions = group.sessions?.filter((s: any) => s.groupId === group.id) || []
-        const studentPaymentRecords = student.payments || []
-        // Simplified payment status calculation
-        const recentPayments = studentPaymentRecords.filter((p: any) => {
-          const paymentDate = new Date(p.createdAt || p.date)
-          const thirtyDaysAgo = new Date()
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-          return paymentDate > thirtyDaysAgo
-        })
-        return {
-          status: recentPayments.length > 0 ? 'paid' : 'due',
-          amount: recentPayments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0),
-          dueDate: new Date(),
-          studentId: student.id,
-          groupId: group.id,
-          currentCycleSessions: studentSessions.length,
-          attendedSessions: 0,
-          paymentDue: recentPayments.length === 0,
-          overflowSessions: 0,
-          nextPaymentAmount: 0,
-          statusMessage: ''
-        }
-      })
       
-      // Determine overall payment status (prioritize worst status)
-      const overallStatus = paymentStatuses.reduce((worst, current) => {
-        const priority: Record<string, number> = { 'paid': 0, 'approaching': 1, 'due': 2, 'overdue': 3 }
-        return (priority[current.status] || 0) > (priority[worst.status] || 0) ? current : worst
-      }, paymentStatuses[0] || { status: 'paid' as const, amount: 0, dueDate: new Date(), studentId: student.id, groupId: '', currentCycleSessions: 0, attendedSessions: 0, paymentDue: false, overflowSessions: 0, nextPaymentAmount: 0, statusMessage: '' })
+      const studentPaymentData = paymentStatuses[student.id]
       
+      // Create payment status object compatible with existing code
+      const paymentStatus = {
+        status: studentPaymentData?.overallStatus === 'A_JOUR' ? 'paid' as const :
+                studentPaymentData?.overallStatus === 'EN_ATTENTE' ? 'pending' as const :
+                studentPaymentData?.overallStatus === 'EN_RETARD' ? 'overdue' as const : 'paid' as const,
+        amount: studentPaymentData?.totalAmountDue || 0,
+        dueDate: new Date(),
+        studentId: student.id,
+        groupId: studentGroups[0]?.id || '',
+        currentCycleSessions: 0,
+        attendedSessions: 0,
+        paymentDue: studentPaymentData?.overallStatus !== 'A_JOUR',
+        overflowSessions: 0,
+        nextPaymentAmount: studentPaymentData?.totalAmountDue || 0,
+        statusMessage: ''
+      }
+       
       return {
         ...student,
-        groups: studentGroups,
-        paymentStatus: overallStatus,
-        totalOwed: paymentStatuses.reduce((sum, status) => sum + (status.amount || status.nextPaymentAmount || 0), 0)
+        paymentStatus,
+        totalOwed: studentPaymentData?.totalAmountDue || 0
       }
     })
-  }, [students, groups])
+  }, [students, groups, paymentStatuses])
+
+  // Delete handlers
+  const handleDeleteClick = (student: Student) => {
+    setStudentToDelete(student)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!studentToDelete) return
+    
+    setIsDeleting(true)
+    try {
+      await deleteStudent(studentToDelete.id)
+      toast.success(`Étudiant ${studentToDelete.name} supprimé avec succès`)
+      setDeleteDialogOpen(false)
+      setStudentToDelete(null)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setStudentToDelete(null)
+  }
 
   // Filter and sort students
   const filteredAndSortedStudents = useMemo(() => {
@@ -113,11 +147,14 @@ export default function EtudiantsPage() {
         student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (student.email || '').toLowerCase().includes(searchTerm.toLowerCase())
       
+      // Get student groups
+      const studentGroups = groups.filter(group => group.students?.some((gs: any) => gs.studentId === student.id))
+      
       // Type filter
       const matchesType = (() => {
         switch (filterType) {
-          case 'active': return student.groups.length > 0
-          case 'inactive': return student.groups.length === 0
+          case 'active': return studentGroups.length > 0
+          case 'inactive': return studentGroups.length === 0
           case 'needs-payment': return ['approaching', 'due', 'overdue'].includes(student.paymentStatus.status)
           case 'paid': return student.paymentStatus.status === 'paid'
           default: return true
@@ -135,7 +172,9 @@ export default function EtudiantsPage() {
         case 'level':
           return (a.level || a.classe).localeCompare(b.level || b.classe)
         case 'groups':
-          return b.groups.length - a.groups.length
+          const aGroups = groups.filter(group => group.students?.some((gs: any) => gs.studentId === a.id)).length
+          const bGroups = groups.filter(group => group.students?.some((gs: any) => gs.studentId === b.id)).length
+          return bGroups - aGroups
         case 'payment-status':
           const priority: Record<string, number> = { 'overdue': 0, 'due': 1, 'approaching': 2, 'paid': 3 }
           return (priority[a.paymentStatus.status] || 3) - (priority[b.paymentStatus.status] || 3)
@@ -145,12 +184,15 @@ export default function EtudiantsPage() {
     })
 
     return filtered
-  }, [studentsWithPaymentStatus, searchTerm, filterType, sortType])
+  }, [studentsWithPaymentStatus, searchTerm, filterType, sortType, groups])
 
   // Calculate statistics
   const stats = useMemo(() => {
     const totalStudents = students?.length || 0
-    const activeStudents = studentsWithPaymentStatus.filter(s => s.groups.length > 0).length
+    const activeStudents = studentsWithPaymentStatus.filter(s => {
+      const studentGroups = groups.filter(group => group.students?.some((gs: any) => gs.studentId === s.id))
+      return studentGroups.length > 0
+    }).length
     const studentsNeedingPayment = studentsWithPaymentStatus.filter(s => 
       ['due', 'overdue'].includes(s.paymentStatus.status)
     ).length
@@ -206,7 +248,7 @@ export default function EtudiantsPage() {
     return colors[index]
   }
 
-  if (studentsLoading || groupsLoading) {
+  if (studentsLoading || groupsLoading || paymentLoading) {
     return (
       <div className="p-6 space-y-6">
         <div className="animate-pulse">
@@ -447,7 +489,7 @@ export default function EtudiantsPage() {
                       {/* Stats */}
                       <div className="grid grid-cols-2 gap-3 mb-4">
                         <div className="text-center p-2 bg-gray-50 rounded-lg">
-                          <div className="text-lg font-bold text-gray-900">{student.groups.length}</div>
+                          <div className="text-lg font-bold text-gray-900">{groups.filter(group => group.students?.some((gs: any) => gs.studentId === student.id)).length}</div>
                           <div className="text-xs text-gray-600">Groupes</div>
                         </div>
                         <div className="text-center p-2 bg-gray-50 rounded-lg">
@@ -472,23 +514,26 @@ export default function EtudiantsPage() {
                       </div>
                       
                       {/* Groups */}
-                      {student.groups.length > 0 && (
-                        <div className="mb-4">
-                          <p className="text-xs text-gray-600 mb-2">Groupes:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {student.groups.slice(0, 2).map(group => (
-                              <span key={group.id} className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full">
-                                {group.subject}
-                              </span>
-                            ))}
-                            {student.groups.length > 2 && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                                +{student.groups.length - 2}
-                              </span>
-                            )}
+                      {(() => {
+                        const studentGroups = groups.filter(group => group.students?.some((gs: any) => gs.studentId === student.id))
+                        return studentGroups.length > 0 && (
+                          <div className="mb-4">
+                            <p className="text-xs text-gray-600 mb-2">Groupes:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {studentGroups.slice(0, 2).map(group => (
+                                <span key={group.id} className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full">
+                                  {group.subject}
+                                </span>
+                              ))}
+                              {studentGroups.length > 2 && (
+                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                  +{studentGroups.length - 2}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )
+                      })()}
                       
                       {/* Actions */}
                       <div className="flex items-center space-x-2">
@@ -500,7 +545,12 @@ export default function EtudiantsPage() {
                           <Edit className="h-4 w-4 mr-1" />
                           Modifier
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => handleDeleteClick(student)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -581,18 +631,23 @@ export default function EtudiantsPage() {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex flex-wrap gap-1">
-                                {student.groups.slice(0, 2).map(group => (
-                                  <span key={group.id} className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full">
-                                    {group.subject}
-                                  </span>
-                                ))}
-                                {student.groups.length > 2 && (
-                                  <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-                                    +{student.groups.length - 2}
-                                  </span>
-                                )}
-                              </div>
+                              {(() => {
+                                const studentGroups = groups.filter(group => group.students?.some((gs: any) => gs.studentId === student.id))
+                                return (
+                                  <div className="flex flex-wrap gap-1">
+                                    {studentGroups.slice(0, 2).map(group => (
+                                      <span key={group.id} className="px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-full">
+                                        {group.subject}
+                                      </span>
+                                    ))}
+                                    {studentGroups.length > 2 && (
+                                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                                        +{studentGroups.length - 2}
+                                      </span>
+                                    )}
+                                  </div>
+                                )
+                              })()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <Badge className={getPaymentStatusColor(student.paymentStatus.status)}>
@@ -610,7 +665,12 @@ export default function EtudiantsPage() {
                                 <Button variant="ghost" size="sm">
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => handleDeleteClick(student)}
+                                >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -654,6 +714,31 @@ export default function EtudiantsPage() {
             )}
           </motion.div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer l'étudiant</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir supprimer l'étudiant <strong>{studentToDelete?.name}</strong> ?
+                Cette action est irréversible et supprimera toutes les données associées à cet étudiant.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleDeleteCancel}>
+                Annuler
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteConfirm} 
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? 'Suppression...' : 'Supprimer'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )

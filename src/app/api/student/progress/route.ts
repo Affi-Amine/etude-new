@@ -12,30 +12,34 @@ const querySchema = z.object({
 // GET /api/student/progress - Get student progress and attendance data
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const { searchParams } = new URL(request.url)
     const { studentId, groupId } = querySchema.parse({
       studentId: searchParams.get('studentId'),
       groupId: searchParams.get('groupId'),
     })
 
-    // For student users, get their student profile
     let targetStudentId = studentId
-    if (session.user.role === 'STUDENT') {
-      const studentProfile = await prisma.student.findFirst({
-        where: { userId: session.user.id }
-      })
+    
+    // If no studentId provided, try to get from NextAuth session
+    if (!targetStudentId) {
+      const session = await getServerSession(authOptions)
       
-      if (!studentProfile) {
-        return NextResponse.json({ error: 'Student profile not found' }, { status: 404 })
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized - studentId required or valid session needed' }, { status: 401 })
       }
-      
-      targetStudentId = studentProfile.id
+
+      // For student users, get their student profile
+      if (session.user.role === 'STUDENT') {
+        const studentProfile = await prisma.student.findFirst({
+          where: { userId: session.user.id }
+        })
+        
+        if (!studentProfile) {
+          return NextResponse.json({ error: 'Student profile not found' }, { status: 404 })
+        }
+        
+        targetStudentId = studentProfile.id
+      }
     }
 
     if (!targetStudentId) {
@@ -115,9 +119,9 @@ export async function GET(request: NextRequest) {
       
       const attendanceRate = totalSessions > 0 ? Math.round((attendedSessions / totalSessions) * 100) : 0
       
-      // Get recent sessions (last 5)
+      // Get recent sessions (sorted by date descending)
       const recentAttendance = groupAttendance
-        .slice(0, 5)
+        .sort((a, b) => new Date(b.session.date).getTime() - new Date(a.session.date).getTime())
         .map(a => ({
           sessionId: a.session.id,
           date: a.session.date,

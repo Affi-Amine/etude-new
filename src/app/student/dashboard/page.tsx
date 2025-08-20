@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { FamilyCodeModal } from '@/components/modals/family-code-modal'
 import { 
   Calendar, 
   BookOpen, 
@@ -24,7 +25,11 @@ import {
   ChevronDown,
   ChevronUp,
   History,
-  CalendarDays
+  CalendarDays,
+  Users,
+  Copy,
+  RefreshCw,
+  Settings
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -105,6 +110,9 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showPastSessions, setShowPastSessions] = useState(false)
+  const [familyCode, setFamilyCode] = useState<string | null>(null)
+  const [generatingCode, setGeneratingCode] = useState(false)
+  const [showFamilyModal, setShowFamilyModal] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -157,6 +165,59 @@ export default function StudentDashboard() {
     router.push('/student/login')
   }
 
+  const generateFamilyCode = async () => {
+    if (!studentData) return
+    
+    try {
+      setGeneratingCode(true)
+      const response = await fetch('/api/student/family-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ studentId: studentData.id }),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setFamilyCode(data.familyCode)
+      } else {
+        setError('Erreur lors de la génération du code famille')
+      }
+    } catch (err) {
+      console.error('Error generating family code:', err)
+      setError('Erreur lors de la génération du code famille')
+    } finally {
+      setGeneratingCode(false)
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+  }
+
+  const fetchFamilyCode = async () => {
+    if (!studentData) return
+    
+    try {
+      const response = await fetch(`/api/student/family-code?studentId=${studentData.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.familyCode) {
+          setFamilyCode(data.familyCode)
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching family code:', err)
+    }
+  }
+
+  useEffect(() => {
+    if (studentData) {
+      fetchFamilyCode()
+    }
+  }, [studentData])
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PRESENT':
@@ -208,9 +269,8 @@ export default function StudentDashboard() {
       .slice(0, 4) // Only last 4 past sessions
     
     const upcomingSessions = sessions
-      .filter(session => new Date(session.date) >= now)
+      .filter(session => new Date(session.date) >= now && session.status === 'SCHEDULED')
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(0, 1) // Only next upcoming session
     
     return { pastSessions, upcomingSessions }
   }
@@ -480,6 +540,13 @@ export default function StudentDashboard() {
                   <TrendingUp className="h-5 w-5" />
                   <span>Progression</span>
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="family" 
+                  className="w-full justify-start flex items-center space-x-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-xl transition-all duration-200 py-4 px-4 font-medium"
+                >
+                  <Users className="h-5 w-5" />
+                  <span>Code Famille</span>
+                </TabsTrigger>
               </TabsList>
               
               <div className="flex-1">
@@ -502,7 +569,7 @@ export default function StudentDashboard() {
                       <CardContent className="p-8">
                         {upcomingSessions.length > 0 ? (
                           <div className="space-y-4">
-                            {upcomingSessions.map((session) => renderSessionCard(session))}
+                            {renderSessionCard(upcomingSessions[0])}
                           </div>
                         ) : (
                           <div className="text-center py-16">
@@ -683,11 +750,145 @@ export default function StudentDashboard() {
                     </div>
                   )}
                 </TabsContent>
+
+                {/* Family Code Tab */}
+                <TabsContent value="family">
+                  <div className="space-y-6">
+                    <Card className="bg-white/80 backdrop-blur-sm border-slate-200 shadow-xl">
+                      <CardHeader className="bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white rounded-t-lg">
+                        <CardTitle className="flex items-center space-x-3">
+                          <div className="bg-white/20 p-2 rounded-lg">
+                            <Users className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <span className="text-xl font-semibold">Code Famille</span>
+                            <p className="text-orange-100 text-sm font-normal mt-1">Invitez votre famille à suivre votre progression</p>
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-8">
+                        <div className="space-y-6">
+                          <div className="text-center">
+                            <p className="text-slate-600 mb-6">
+                              Générez un code unique pour permettre à votre famille de suivre votre progression académique.
+                            </p>
+                          </div>
+                          
+                          {familyCode ? (
+                            <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-6">
+                              <div className="text-center space-y-4">
+                                <h3 className="text-lg font-semibold text-orange-800">Votre Code Famille</h3>
+                                <div className="bg-white border-2 border-orange-300 rounded-lg p-4 font-mono text-2xl font-bold text-orange-700 tracking-wider">
+                                  {familyCode}
+                                </div>
+                                <div className="flex justify-center space-x-3">
+                                <Button
+                                  onClick={() => copyToClipboard(familyCode)}
+                                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                                >
+                                  <Copy className="h-4 w-4 mr-2" />
+                                  Copier le Code
+                                </Button>
+                                <Button
+                                  onClick={generateFamilyCode}
+                                  variant="outline"
+                                  className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                                  disabled={generatingCode}
+                                >
+                                  <RefreshCw className={`h-4 w-4 mr-2 ${generatingCode ? 'animate-spin' : ''}`} />
+                                  Nouveau Code
+                                </Button>
+                                <Button
+                                  onClick={() => setShowFamilyModal(true)}
+                                  variant="outline"
+                                  className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                                >
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Gérer
+                                </Button>
+                              </div>
+                                <p className="text-sm text-orange-600">
+                                  Partagez ce code avec votre famille pour qu'ils puissent suivre votre progression.
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center space-y-4">
+                              <div className="bg-slate-50 border border-slate-200 rounded-xl p-8">
+                                <Users className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+                                <h3 className="text-lg font-semibold text-slate-700 mb-2">Aucun Code Généré</h3>
+                                <p className="text-slate-500 mb-6">
+                                  Cliquez sur le bouton ci-dessous pour générer votre premier code famille.
+                                </p>
+                                <div className="flex justify-center space-x-3">
+                                  <Button
+                                    onClick={generateFamilyCode}
+                                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                                    disabled={generatingCode}
+                                  >
+                                    {generatingCode ? (
+                                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                    ) : (
+                                      <Users className="h-4 w-4 mr-2" />
+                                    )}
+                                    Générer Code Famille
+                                  </Button>
+                                  <Button
+                                    onClick={() => setShowFamilyModal(true)}
+                                    variant="outline"
+                                    className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                                  >
+                                    <Settings className="h-4 w-4 mr-2" />
+                                    Gérer Accès
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                            <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                              <AlertCircle className="h-5 w-5 mr-2" />
+                              Comment ça marche ?
+                            </h4>
+                            <ul className="space-y-2 text-sm text-blue-700">
+                              <li className="flex items-start space-x-2">
+                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                                <span>Générez un code unique pour votre famille</span>
+                              </li>
+                              <li className="flex items-start space-x-2">
+                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                                <span>Partagez ce code avec vos parents ou tuteurs</span>
+                              </li>
+                              <li className="flex items-start space-x-2">
+                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                                <span>Ils pourront suivre votre progression et vos résultats</span>
+                              </li>
+                              <li className="flex items-start space-x-2">
+                                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                                <span>Vous pouvez générer un nouveau code à tout moment</span>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
               </div>
             </div>
           </Tabs>
         </div>
       </div>
+      
+      {/* Family Code Management Modal */}
+      <FamilyCodeModal
+        isOpen={showFamilyModal}
+        onClose={() => setShowFamilyModal(false)}
+        studentId={studentData?.id || ''}
+        currentFamilyCode={familyCode}
+        onCodeUpdate={(newCode) => setFamilyCode(newCode)}
+      />
     </div>
   )
 }

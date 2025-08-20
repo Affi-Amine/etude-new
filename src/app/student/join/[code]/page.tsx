@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, CheckCircle, Users, Clock, User } from 'lucide-react'
 import Link from 'next/link'
 
@@ -51,7 +52,8 @@ export default function StudentJoinPage({ params }: StudentJoinPageProps) {
     confirmPassword: '',
     classe: '',
     lycee: '',
-    level: ''
+    niveau: '',
+    section: ''
   })
 
   useEffect(() => {
@@ -129,7 +131,8 @@ export default function StudentJoinPage({ params }: StudentJoinPageProps) {
           password: formData.password,
           classe: formData.classe,
           lycee: formData.lycee,
-          level: formData.level,
+          niveau: formData.niveau,
+          section: formData.section,
         }),
       })
 
@@ -291,15 +294,18 @@ export default function StudentJoinPage({ params }: StudentJoinPageProps) {
                 <p className="text-xs text-gray-500 mt-1">Entre 8 et 15 chiffres</p>
               </div>
               <div>
-                <Label htmlFor="level">Niveau (optionnel)</Label>
-                <Input
-                  id="level"
-                  name="level"
-                  type="text"
-                  value={formData.level}
-                  onChange={handleInputChange}
-                  placeholder="Terminale, 1ère, etc."
-                />
+                <Label htmlFor="niveau">Niveau *</Label>
+                <Select value={formData.niveau} onValueChange={(value) => setFormData({...formData, niveau: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez votre niveau" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1ere">1ère</SelectItem>
+                    <SelectItem value="2eme">2ème</SelectItem>
+                    <SelectItem value="3eme">3ème</SelectItem>
+                    <SelectItem value="Bac">Bac</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -328,6 +334,26 @@ export default function StudentJoinPage({ params }: StudentJoinPageProps) {
                   placeholder="Nom de votre lycée"
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="section">Section *</Label>
+                <Select value={formData.section} onValueChange={(value) => setFormData({...formData, section: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez votre section" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Techniques">Techniques</SelectItem>
+                    <SelectItem value="Sciences">Sciences</SelectItem>
+                    <SelectItem value="Mathematique">Mathématique</SelectItem>
+                    <SelectItem value="Economie & Gestion">Économie & Gestion</SelectItem>
+                    <SelectItem value="Lettres">Lettres</SelectItem>
+                    <SelectItem value="Sports">Sports</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div></div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

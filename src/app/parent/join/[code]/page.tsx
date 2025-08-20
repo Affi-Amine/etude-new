@@ -83,8 +83,8 @@ export default function ParentJoinPage() {
     setError('')
 
     // Validate form
-    if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.relationship) {
-      setError('Veuillez remplir tous les champs')
+    if (!formData.name || !formData.phone || !formData.password || !formData.relationship) {
+      setError('Veuillez remplir tous les champs obligatoires')
       setSubmitting(false)
       return
     }
@@ -238,14 +238,13 @@ export default function ParentJoinPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
+                <Label htmlFor="email">Email (optionnel)</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   placeholder="votre.email@exemple.com"
-                  required
                 />
               </div>
 

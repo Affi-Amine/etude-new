@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { X, Plus, Users, Clock, DollarSign, Calendar, Trash2 } from 'lucide-react'
+import { X, Plus, Clock, DollarSign, Calendar, BookOpen, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,17 +20,11 @@ interface NewGroupCreationModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (groupData: NewGroupFormData) => void
-  availableStudents: Student[]
+  availableStudents?: Student[]
   editingGroup?: Group | null
 }
 
-interface NewStudentData {
-  name: string
-  classe: string
-  lycee: string
-  phone: string
-  email?: string
-}
+
 
 const DAYS_OF_WEEK = [
   { value: 'MONDAY', label: 'Lundi' },
@@ -51,7 +45,7 @@ export default function NewGroupCreationModal({
   isOpen,
   onClose,
   onSubmit,
-  availableStudents,
+  availableStudents = [],
   editingGroup
 }: NewGroupCreationModalProps) {
   const [formData, setFormData] = useState<NewGroupFormData>({
@@ -66,20 +60,12 @@ export default function NewGroupCreationModal({
     studentIds: []
   })
 
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([])
-  const [newStudents, setNewStudents] = useState<NewStudentData[]>([])
-  const [currentStudent, setCurrentStudent] = useState<NewStudentData>({
-    name: '',
-    classe: '',
-    lycee: '',
-    phone: '',
-    email: ''
-  })
+
 
   const [currentSession, setCurrentSession] = useState<WeeklySession>({
     dayOfWeek: 'MONDAY',
     startTime: '',
-    duration: 60
+    duration: 120
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -96,9 +82,8 @@ export default function NewGroupCreationModal({
         registrationFee: editingGroup.registrationFee || 0,
         semesterStartDate: editingGroup.semesterStartDate ? new Date(editingGroup.semesterStartDate) : new Date(),
         semesterEndDate: editingGroup.semesterEndDate ? new Date(editingGroup.semesterEndDate) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-        studentIds: editingGroup.students?.map((s: any) => s.studentId) || []
+        studentIds: []
       })
-      setSelectedStudents(editingGroup.students?.map((s: any) => s.studentId) || [])
     } else {
       // Reset form for new group creation
       setFormData({
@@ -112,8 +97,6 @@ export default function NewGroupCreationModal({
         semesterEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
         studentIds: []
       })
-      setSelectedStudents([])
-      setNewStudents([])
     }
   }, [editingGroup])
 
@@ -123,19 +106,11 @@ export default function NewGroupCreationModal({
       formData.subject.trim() !== '' &&
       formData.weeklySchedule.length > 0 &&
       formData.sessionFee > 0 &&
-      formData.paymentThreshold > 0 &&
-      (selectedStudents.length > 0 || newStudents.length > 0)
+      formData.paymentThreshold > 0
     )
-  }, [formData, selectedStudents, newStudents])
+  }, [formData])
 
-  const isCurrentStudentValid = useMemo(() => {
-    return (
-      currentStudent.name.trim() !== '' &&
-      currentStudent.classe.trim() !== '' &&
-      currentStudent.lycee.trim() !== '' &&
-      currentStudent.phone.trim() !== ''
-    )
-  }, [currentStudent])
+
 
   const isCurrentSessionValid = useMemo(() => {
     return (
@@ -157,7 +132,7 @@ export default function NewGroupCreationModal({
       setCurrentSession({
         dayOfWeek: 'MONDAY',
         startTime: '',
-        duration: 60
+        duration: 120
       })
     }
   }
@@ -169,22 +144,7 @@ export default function NewGroupCreationModal({
     }))
   }
 
-  const addNewStudent = () => {
-    if (isCurrentStudentValid) {
-      setNewStudents(prev => [...prev, currentStudent])
-      setCurrentStudent({
-        name: '',
-        classe: '',
-        lycee: '',
-        phone: '',
-        email: ''
-      })
-    }
-  }
 
-  const removeNewStudent = (index: number) => {
-    setNewStudents(prev => prev.filter((_, i) => i !== index))
-  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -201,8 +161,8 @@ export default function NewGroupCreationModal({
       registrationFee: formData.registrationFee || 0,
       semesterStartDate: formData.semesterStartDate,
       semesterEndDate: formData.semesterEndDate,
-      studentIds: selectedStudents,
-      newStudents: newStudents
+      studentIds: [],
+      newStudents: []
     }
     
     console.log('Submitting group data:', groupData)
@@ -220,15 +180,6 @@ export default function NewGroupCreationModal({
       semesterEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
       studentIds: []
     })
-    setSelectedStudents([])
-    setNewStudents([])
-    setCurrentStudent({
-      name: '',
-      classe: '',
-      lycee: '',
-      phone: '',
-      email: ''
-    })
     setCurrentSession({
       dayOfWeek: 'MONDAY',
       startTime: '',
@@ -237,13 +188,7 @@ export default function NewGroupCreationModal({
     setErrors({})
   }
 
-  const toggleStudent = (studentId: string) => {
-    setSelectedStudents(prev => 
-      prev.includes(studentId) 
-        ? prev.filter(id => id !== studentId)
-        : [...prev, studentId]
-    )
-  }
+
 
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0]
@@ -288,7 +233,7 @@ export default function NewGroupCreationModal({
           {/* Basic Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Users className="h-5 w-5 mr-2 text-indigo-600" />
+              <BookOpen className="h-5 w-5 mr-2 text-indigo-600" />
               Informations de base
             </h3>
             
@@ -533,132 +478,7 @@ export default function NewGroupCreationModal({
             </div>
           </div>
 
-          {/* Student Selection */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Users className="h-5 w-5 mr-2 text-indigo-600" />
-              Sélection des étudiants
-            </h3>
-            
-            {/* Existing Students */}
-            {availableStudents.length > 0 && (
-              <div>
-                <Label>Étudiants existants:</Label>
-                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3 space-y-2">
-                  {availableStudents.map(student => (
-                    <div key={student.id} className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        id={`student-${student.id}`}
-                        checked={selectedStudents.includes(student.id)}
-                        onChange={() => toggleStudent(student.id)}
-                        className="rounded border-gray-300"
-                      />
-                      <label htmlFor={`student-${student.id}`} className="flex-1 text-sm">
-                        {student.name} - {student.classe} ({student.lycee})
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* New Students */}
-            <div className="space-y-4">
-              <Label>Ajouter de nouveaux étudiants:</Label>
-              
-              {/* New Students List */}
-              {newStudents.length > 0 && (
-                <div className="space-y-2">
-                  {newStudents.map((student, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                      <div>
-                        <span className="font-medium">{student.name}</span>
-                        <span className="text-sm text-gray-600 ml-2">
-                          {student.classe} - {student.lycee}
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeNewStudent(index)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {/* Add New Student Form */}
-              <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="studentName">Nom complet</Label>
-                    <Input
-                      id="studentName"
-                      value={currentStudent.name}
-                      onChange={(e) => setCurrentStudent(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Nom de l'étudiant"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="studentClasse">Classe</Label>
-                    <Input
-                      id="studentClasse"
-                      value={currentStudent.classe}
-                      onChange={(e) => setCurrentStudent(prev => ({ ...prev, classe: e.target.value }))}
-                      placeholder="ex: Bac Sciences"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="studentLycee">Lycée</Label>
-                    <Input
-                      id="studentLycee"
-                      value={currentStudent.lycee}
-                      onChange={(e) => setCurrentStudent(prev => ({ ...prev, lycee: e.target.value }))}
-                      placeholder="Nom du lycée"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="studentPhone">Téléphone</Label>
-                    <Input
-                      id="studentPhone"
-                      value={currentStudent.phone}
-                      onChange={(e) => setCurrentStudent(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="Numéro de téléphone"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="studentEmail">Email (optionnel)</Label>
-                  <Input
-                    id="studentEmail"
-                    type="email"
-                    value={currentStudent.email || ''}
-                    onChange={(e) => setCurrentStudent(prev => ({ ...prev, email: e.target.value }))}
-                    placeholder="email@example.com"
-                  />
-                </div>
-                
-                <Button
-                  type="button"
-                  onClick={addNewStudent}
-                  disabled={!isCurrentStudentValid}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Ajouter l'étudiant
-                </Button>
-              </div>
-            </div>
-          </div>
+
 
           {/* Submit Button */}
           <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">

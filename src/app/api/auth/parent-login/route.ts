@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
 const parentLoginSchema = z.object({
-  email: z.string().email(),
+  identifier: z.string().min(1), // Can be email or phone
   password: z.string().min(1),
 })
 
@@ -12,13 +12,20 @@ const parentLoginSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password } = parentLoginSchema.parse(body)
+    const { identifier, password } = parentLoginSchema.parse(body)
 
-    // Find parent user by email
-    const parentUser = await prisma.user.findUnique({
+    // Determine if identifier is email or phone
+    const isEmail = identifier.includes('@')
+    
+    // Find parent user by email or phone
+    const parentUser = await prisma.user.findFirst({
       where: { 
-        email,
-        role: 'PARENT'
+        AND: [
+          { role: 'PARENT' },
+          isEmail 
+            ? { email: identifier }
+            : { phone: identifier }
+        ]
       },
       include: {
         parentConnections: {
@@ -44,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     if (!parentUser) {
       return NextResponse.json(
-        { error: 'Email ou mot de passe incorrect' },
+        { error: 'Identifiant ou mot de passe incorrect' },
         { status: 401 }
       )
     }
@@ -61,7 +68,7 @@ export async function POST(request: NextRequest) {
     const isPasswordValid = await bcrypt.compare(password, parentUser.password)
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: 'Email ou mot de passe incorrect' },
+        { error: 'Identifiant ou mot de passe incorrect' },
         { status: 401 }
       )
     }
