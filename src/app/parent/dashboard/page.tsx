@@ -40,9 +40,9 @@ interface ParentData {
       name: string
       email: string
       phone: string
-      classe: string
+      niveau: string
+      section: string
       lycee: string
-      level: string
       groups: Array<{
         id: string
         name: string
@@ -87,18 +87,15 @@ export default function ParentDashboardPage() {
     loadParentData()
   }, [])
 
-  const loadParentData = () => {
+  const loadParentData = async () => {
     try {
       const storedData = localStorage.getItem('parentData')
       if (storedData) {
         const data = JSON.parse(storedData)
         setParentData(data)
-        // Load progress for each connected student
-        data.connections.forEach((connection: any) => {
-          if (connection.isActive) {
-            loadStudentProgress(connection.student.id)
-          }
-        })
+        
+        // Load progress for all students in one API call
+        await loadAllStudentsProgress(data.id)
       } else {
         router.push('/parent/login')
       }
@@ -109,50 +106,40 @@ export default function ParentDashboardPage() {
     }
   }
 
-  const loadStudentProgress = async (studentId: string) => {
+  const loadAllStudentsProgress = async (parentId: string) => {
     try {
-      // Mock data for now - in real implementation, this would fetch from API
-      const mockProgress: StudentProgress = {
-        studentId,
-        totalSessions: 16,
-        attendedSessions: 14,
-        attendanceRate: 87.5,
-        paymentStatus: {
-          status: 'A_JOUR',
-          amountDue: 0,
-          nextPaymentDate: '2024-02-01'
-        },
-        recentSessions: [
-          {
-            id: '1',
-            date: '2024-01-15',
-            subject: 'Mathématiques',
-            attended: true,
-            groupName: 'Terminale S'
-          },
-          {
-            id: '2',
-            date: '2024-01-12',
-            subject: 'Physique',
-            attended: true,
-            groupName: 'Terminale S'
-          },
-          {
-            id: '3',
-            date: '2024-01-10',
-            subject: 'Mathématiques',
-            attended: false,
-            groupName: 'Terminale S'
-          }
-        ]
+      const response = await fetch(`/api/parent/progress?parentId=${parentId}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch students progress')
       }
       
-      setStudentsProgress(prev => ({
-        ...prev,
-        [studentId]: mockProgress
-      }))
+      const data = await response.json()
+      
+      // Convert array to object keyed by studentId
+      const progressByStudent: Record<string, StudentProgress> = {}
+      data.studentsProgress.forEach((sp: any) => {
+        progressByStudent[sp.studentId] = {
+          studentId: sp.studentId,
+          totalSessions: sp.totalSessions,
+          attendedSessions: sp.attendedSessions,
+          attendanceRate: sp.attendanceRate,
+          paymentStatus: sp.paymentStatus,
+          recentSessions: sp.recentSessions
+        }
+      })
+      
+      setStudentsProgress(progressByStudent)
     } catch (err) {
-      console.error('Error loading student progress:', err)
+      console.error('Error loading students progress:', err)
+      // Keep empty progress data if API fails
+      setStudentsProgress({})
+    }
+  }
+
+  const loadStudentProgress = async (studentId: string) => {
+    // This function is kept for compatibility but now just calls loadAllStudentsProgress
+    if (parentData?.id) {
+      await loadAllStudentsProgress(parentData.id)
     }
   }
 
@@ -298,7 +285,7 @@ export default function ParentDashboardPage() {
                         <div>
                           <h2 className="text-2xl font-bold">{student.name}</h2>
                           <p className="text-indigo-100">
-                            {student.classe} • {student.lycee}
+                            {student.niveau} {student.section} • {student.lycee}
                           </p>
                           <p className="text-indigo-200 text-sm">
                             Relation: {connection.relationship}
@@ -307,7 +294,7 @@ export default function ParentDashboardPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-indigo-100 text-sm">Niveau</p>
-                        <p className="text-xl font-semibold">{student.level}</p>
+                        <p className="text-xl font-semibold">{student.niveau}</p>
                       </div>
                     </div>
                   </div>

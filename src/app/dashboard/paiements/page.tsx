@@ -27,6 +27,9 @@ interface Group {
   }
   sessionFee?: number
   monthlyFee?: number
+  pendingAmount?: number
+  overdueAmount?: number
+  totalRevenue?: number
 }
 
 interface PaymentStats {
@@ -52,14 +55,55 @@ export default function PaiementsPage() {
   const fetchData = async () => {
     try {
       setLoading(true)
+      console.log('Fetching payment data...');
       const [groupsResponse, statsResponse] = await Promise.all([
         fetch('/api/groups'),
         fetch('/api/payments/global-stats')
       ])
+      console.log('API responses:', { groupsOk: groupsResponse.ok, statsOk: statsResponse.ok });
 
       if (groupsResponse.ok) {
         const groupsData = await groupsResponse.json()
-        setGroups(groupsData)
+        
+        // Fetch payment stats for each group
+        const groupsWithStats = await Promise.all(
+          groupsData.map(async (group: Group) => {
+            try {
+              console.log(`Fetching stats for group ${group.id}...`)
+              const statsRes = await fetch(`/api/payments/stats?groupId=${group.id}&period=month`)
+              console.log(`Stats response for group ${group.id}:`, { ok: statsRes.ok, status: statsRes.status })
+              
+              if (statsRes.ok) {
+                const groupStats = await statsRes.json()
+                console.log(`Group ${group.id} stats:`, groupStats)
+                return {
+                  ...group,
+                  pendingAmount: groupStats.pendingAmount || 0,
+                  overdueAmount: groupStats.overdueAmount || 0,
+                  totalRevenue: groupStats.totalRevenue || 0
+                }
+              } else {
+                console.error(`Failed to fetch stats for group ${group.id}:`, statsRes.status, statsRes.statusText)
+                return {
+                  ...group,
+                  pendingAmount: 0,
+                  overdueAmount: 0,
+                  totalRevenue: 0
+                }
+              }
+            } catch (error) {
+              console.error(`Error fetching stats for group ${group.id}:`, error)
+              return {
+                ...group,
+                pendingAmount: 0,
+                overdueAmount: 0,
+                totalRevenue: 0
+              }
+            }
+          })
+        )
+        
+        setGroups(groupsWithStats)
       }
 
       if (statsResponse.ok) {
@@ -274,21 +318,37 @@ export default function PaiementsPage() {
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{group.subject}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-green-600">
-                        {formatCurrency(group.sessionFee || group.monthlyFee || 0)}/cycle
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedGroup(group)
-                        }}
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        Voir
-                      </Button>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-green-600">
+                          {formatCurrency(group.sessionFee || group.monthlyFee || 0)}/cycle
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedGroup(group)
+                          }}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          Voir
+                        </Button>
+                      </div>
+                      {((group.pendingAmount || 0) > 0 || (group.overdueAmount || 0) > 0) ? (
+                         <div className="flex items-center justify-between text-xs">
+                           {(group.pendingAmount || 0) > 0 && (
+                             <span className="text-orange-600 font-medium">
+                               En attente: {formatCurrency(group.pendingAmount || 0)}
+                             </span>
+                           )}
+                           {(group.overdueAmount || 0) > 0 && (
+                             <span className="text-red-600 font-medium">
+                               En retard: {formatCurrency(group.overdueAmount || 0)}
+                             </span>
+                           )}
+                         </div>
+                       ) : null}
                     </div>
                   </motion.div>
                 ))}

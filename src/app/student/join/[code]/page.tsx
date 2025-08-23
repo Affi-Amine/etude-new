@@ -50,7 +50,6 @@ export default function StudentJoinPage({ params }: StudentJoinPageProps) {
     phone: '',
     password: '',
     confirmPassword: '',
-    classe: '',
     lycee: '',
     niveau: '',
     section: ''
@@ -97,7 +96,7 @@ export default function StudentJoinPage({ params }: StudentJoinPageProps) {
     }
 
     // Validate required fields
-    if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.classe || !formData.lycee) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.lycee || !formData.niveau || !formData.section) {
       setError('Veuillez remplir tous les champs obligatoires')
       setRegistering(false)
       return
@@ -129,7 +128,6 @@ export default function StudentJoinPage({ params }: StudentJoinPageProps) {
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-          classe: formData.classe,
           lycee: formData.lycee,
           niveau: formData.niveau,
           section: formData.section,
@@ -309,31 +307,17 @@ export default function StudentJoinPage({ params }: StudentJoinPageProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="classe">Classe *</Label>
-                <Input
-                  id="classe"
-                  name="classe"
-                  type="text"
-                  value={formData.classe}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="TS1, 1S2, etc."
-                />
-              </div>
-              <div>
-                <Label htmlFor="lycee">Lycée *</Label>
-                <Input
-                  id="lycee"
-                  name="lycee"
-                  type="text"
-                  value={formData.lycee}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Nom de votre lycée"
-                />
-              </div>
+            <div>
+              <Label htmlFor="lycee">Lycée *</Label>
+              <Input
+                id="lycee"
+                name="lycee"
+                type="text"
+                value={formData.lycee}
+                onChange={handleInputChange}
+                required
+                placeholder="Nom de votre lycée"
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

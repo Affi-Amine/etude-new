@@ -571,10 +571,10 @@ export default function DashboardPage() {
                               {attendanceRate}% présence
                             </p>
                             <p className="text-xs text-gray-500">
-                              {group.paymentThreshold || 4} sessions/mois
+                              {group.paymentThreshold || 8} sessions/mois
                             </p>
                             <p className="text-xs font-medium text-blue-600">
-                              {formatCurrency((group.sessionFee || 0) * (group.paymentThreshold || 4))}/mois
+                              {formatCurrency((group.sessionFee || 0) * (group.paymentThreshold || 8))}/mois
                             </p>
                           </div>
                         </div>

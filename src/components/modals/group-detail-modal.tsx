@@ -91,7 +91,7 @@ export default function GroupDetailModal({
               paymentStatus: {
                 status: paymentStatus.currentStatus?.toLowerCase() || 'unknown',
                 amount: paymentStatus.amountDue || 0,
-                currentCycleSessions: group.paymentThreshold || 4,
+                currentCycleSessions: group.paymentThreshold || 8,
                 attendedSessions: paymentStatus.attendedSessions || 0, // Use attended sessions from payment status
                 nextPaymentAmount: paymentStatus.amountDue || 0,
                 statusMessage: getStatusMessage(paymentStatus.currentStatus, paymentStatus.totalSessionsInCycle)
@@ -105,7 +105,7 @@ export default function GroupDetailModal({
               paymentStatus: { 
                 status: 'unknown', 
                 amount: 0,
-                currentCycleSessions: group.paymentThreshold || 4,
+                currentCycleSessions: group.paymentThreshold || 8,
                 attendedSessions: 0,
                 nextPaymentAmount: 0,
                 statusMessage: 'Erreur de calcul'
@@ -253,7 +253,7 @@ export default function GroupDetailModal({
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-600">Sessions</p>
-                        <p className="text-2xl font-bold text-gray-900">{group.paymentThreshold || 4}</p>
+                        <p className="text-2xl font-bold text-gray-900">{group.paymentThreshold || 8}</p>
                       </div>
                       <Calendar className="h-8 w-8 text-green-600" />
                     </div>
@@ -267,11 +267,11 @@ export default function GroupDetailModal({
                         <p className="text-sm text-gray-600">Prix mensuel</p>
                         <p className="text-2xl font-bold text-gray-900">
                           {formatCurrency(
-                            (group.sessionFee || 0) * (group.paymentThreshold || 4)
+                            (group.sessionFee || 0) * (group.paymentThreshold || 8)
                           )}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {group.paymentThreshold || 4} sessions × {formatCurrency(group.sessionFee || 0)}
+                          {group.paymentThreshold || 8} sessions × {formatCurrency(group.sessionFee || 0)}
                         </p>
                       </div>
                       <DollarSign className="h-8 w-8 text-yellow-600" />
@@ -305,7 +305,7 @@ export default function GroupDetailModal({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">Sessions par mois</p>
-                      <p className="font-medium">{group.paymentThreshold || 4} sessions</p>
+                      <p className="font-medium">{group.paymentThreshold || 8} sessions</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Prix par session</p>
@@ -375,7 +375,7 @@ export default function GroupDetailModal({
                           <div className="text-right">
                         <p className="text-sm text-gray-600">Sessions</p>
                         <p className="font-medium">
-                          {student.paymentStatus?.attendedSessions || 0} / {group.paymentThreshold || 4}
+                          {student.paymentStatus?.attendedSessions || 0} / {group.paymentThreshold || 8}
                         </p>
                       </div>
                           

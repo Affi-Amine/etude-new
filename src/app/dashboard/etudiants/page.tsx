@@ -170,7 +170,7 @@ export default function EtudiantsPage() {
         case 'name':
           return a.name.localeCompare(b.name)
         case 'level':
-          return (a.level || a.classe).localeCompare(b.level || b.classe)
+          return (a.niveau + ' ' + a.section).localeCompare(b.niveau + ' ' + b.section)
         case 'groups':
           const aGroups = groups.filter(group => group.students?.some((gs: any) => gs.studentId === a.id)).length
           const bGroups = groups.filter(group => group.students?.some((gs: any) => gs.studentId === b.id)).length
@@ -471,7 +471,7 @@ export default function EtudiantsPage() {
                         <h3 className="text-lg font-bold text-gray-900">
                           {student.name}
                         </h3>
-                        <p className="text-gray-600 text-sm">{student.level || student.classe}</p>
+                        <p className="text-gray-600 text-sm">{student.niveau} {student.section}</p>
                       </div>
                       
                       {/* Contact info */}
@@ -627,7 +627,7 @@ export default function EtudiantsPage() {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                                {student.level || student.classe}
+                                {student.niveau} {student.section}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">

@@ -53,7 +53,8 @@ export async function GET(
                 name: true,
                 email: true,
                 phone: true,
-                classe: true,
+                niveau: true,
+                section: true,
                 lycee: true,
               }
             }
@@ -140,7 +141,8 @@ export async function PUT(
                 name: true,
                 email: true,
                 phone: true,
-                classe: true,
+                niveau: true,
+                section: true,
                 lycee: true,
               }
             }

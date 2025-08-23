@@ -68,9 +68,9 @@ export interface Student {
   lastName?: string;
   email?: string;
   phone: string;
-  classe: string;
+  niveau: string;
+  section: string;
   lycee: string;
-  level?: string;
   enrollmentDate?: Date;
   isActive: boolean;
   createdAt: Date;

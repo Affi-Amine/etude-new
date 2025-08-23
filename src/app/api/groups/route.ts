@@ -64,8 +64,8 @@ export async function GET() {
                 name: true,
                 email: true,
                 phone: true,
-                classe: true,
-                level: true,
+                niveau: true,
+                section: true,
               }
             }
           }
@@ -182,6 +182,23 @@ export async function POST(request: NextRequest) {
   try {
     const prisma = await getTenantPrisma()
     const teacherId = await getCurrentTenantId()
+    
+    console.log('DEBUG: teacherId from session:', teacherId)
+    
+    // Verify the teacher exists in the database
+    const teacher = await prisma.user.findUnique({
+      where: { id: teacherId },
+      select: { id: true, name: true, email: true, role: true }
+    })
+    
+    console.log('DEBUG: teacher found in DB:', teacher)
+    
+    if (!teacher) {
+      return NextResponse.json(
+        { error: 'Teacher not found in database. Please log out and log back in.' },
+        { status: 401 }
+      )
+    }
 
     const body = await request.json()
     
@@ -191,6 +208,16 @@ export async function POST(request: NextRequest) {
     if (isNewFormat) {
       // Handle new multi-session group creation
       const validatedData = createNewGroupSchema.parse(body)
+      
+      console.log('📝 Creating group with data:', {
+        name: validatedData.name,
+        subject: validatedData.subject,
+        sessionFee: validatedData.sessionFee,
+        paymentThreshold: validatedData.paymentThreshold,
+        weeklySchedule: validatedData.weeklySchedule
+      })
+      console.log('🔍 Raw request body paymentThreshold:', body?.paymentThreshold, 'type:', typeof body?.paymentThreshold)
+      console.log('🔍 Processed validatedData paymentThreshold:', validatedData.paymentThreshold, 'type:', typeof validatedData.paymentThreshold)
       
       // Create the group with new format
       const group = await prisma.group.create({
@@ -215,8 +242,8 @@ export async function POST(request: NextRequest) {
                   name: true,
                   email: true,
                   phone: true,
-                  classe: true,
-                  level: true,
+                  niveau: true,
+                  section: true,
                 }
               }
             }
@@ -256,8 +283,8 @@ export async function POST(request: NextRequest) {
                   name: true,
                   email: true,
                   phone: true,
-                  classe: true,
-                  level: true,
+                  niveau: true,
+                  section: true,
                 }
               }
             }
@@ -315,8 +342,8 @@ export async function POST(request: NextRequest) {
                 name: true,
                 email: true,
                 phone: true,
-                classe: true,
-                level: true,
+                niveau: true,
+                section: true,
               }
             }
           }
@@ -352,8 +379,8 @@ export async function POST(request: NextRequest) {
                     name: true,
                     email: true,
                     phone: true,
-                    classe: true,
-                    level: true,
+                    niveau: true,
+                    section: true,
                   }
                 }
               }

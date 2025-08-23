@@ -89,9 +89,9 @@ export async function POST(request: NextRequest) {
           name: connection.student.name,
           email: connection.student.email,
           phone: connection.student.phone,
-          classe: connection.student.classe,
+          niveau: connection.student.niveau,
+          section: connection.student.section,
           lycee: connection.student.lycee,
-          level: connection.student.level,
           groups: connection.student.groups.map(sg => ({
             id: sg.group.id,
             name: sg.group.name,

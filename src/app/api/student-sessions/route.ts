@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
           const paymentStatus = await calculateStudentPaymentStatus(student.id, groupId)
           
           // Get payment threshold and session fee
-          const paymentThreshold = group.paymentThreshold || 4
+          const paymentThreshold = group.paymentThreshold || 8
           const sessionFee = group.sessionFee || (group.monthlyFee ? (group.monthlyFee / paymentThreshold) : 0)
           
           // Check if student has recent payment
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
             session.attendance.some(att => att.studentId === student.id && att.status === 'PRESENT')
           ).length
           
-          const paymentThreshold = group.paymentThreshold || 4
+          const paymentThreshold = group.paymentThreshold || 8
           const sessionFee = group.sessionFee || (group.monthlyFee ? (group.monthlyFee / paymentThreshold) : 0)
           const lastPayment = recentPayments.find(payment => payment.studentId === student.id)
           const isPaid = !!lastPayment
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
       group: {
         id: group.id,
         name: group.name,
-        paymentThreshold: group.paymentThreshold || 4,
+        paymentThreshold: group.paymentThreshold || 8,
         sessionFee: group.sessionFee || 0
       }
     })

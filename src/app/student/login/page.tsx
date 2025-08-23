@@ -207,7 +207,7 @@ export default function StudentLoginPage() {
           </p>
           <div className="pt-4">
             <Link 
-              href="/auth/signin" 
+              href="/auth/connexion" 
               className="text-sm text-blue-600 hover:text-blue-700 underline"
             >
               Connexion Professeur

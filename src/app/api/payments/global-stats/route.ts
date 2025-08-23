@@ -38,26 +38,20 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Calculate global statistics
+    // Calculate global statistics from actual payments
     const totalRevenue = allPayments
       .filter((p) => p.status === 'PAID')
-      .reduce((sum, p) => sum + p.amount, 0) || 0;
-
-    const pendingAmount = allPayments
-      .filter((p) => p.status === 'PENDING')
-      .reduce((sum, p) => sum + p.amount, 0) || 0;
-
-    const overdueAmount = allPayments
-      .filter((p) => p.status === 'OVERDUE')
       .reduce((sum, p) => sum + p.amount, 0) || 0;
 
     const totalGroups = groups.length;
     const totalStudents = groups.reduce((sum, group) => sum + group.students.length, 0);
 
-    // Calculate student statuses across all groups
+    // Calculate student statuses and amounts across all groups
     let studentsUpToDate = 0;
     let studentsWithOverdue = 0;
     let studentsWithPending = 0;
+    let totalPendingAmount = 0;
+    let totalOverdueAmount = 0;
 
     for (const group of groups) {
       for (const groupStudent of group.students) {
@@ -67,15 +61,23 @@ export async function GET(request: NextRequest) {
             group.id
           );
           
+          console.log(`Student ${groupStudent.student.id} in group ${group.id}:`, {
+            status: paymentData.currentStatus,
+            amountDue: paymentData.amountDue,
+            attendedSessions: paymentData.attendedSessions
+          });
+          
           switch (paymentData.currentStatus) {
             case 'A_JOUR':
               studentsUpToDate++;
               break;
             case 'EN_RETARD':
               studentsWithOverdue++;
+              totalOverdueAmount += paymentData.amountDue;
               break;
             case 'EN_ATTENTE':
               studentsWithPending++;
+              totalPendingAmount += paymentData.amountDue;
               break;
           }
         } catch (error) {
@@ -86,16 +88,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    const result = {
       totalRevenue,
-      pendingAmount,
-      overdueAmount,
+      pendingAmount: totalPendingAmount,
+      overdueAmount: totalOverdueAmount,
       totalGroups,
       activeStudents: totalStudents,
       studentsUpToDate,
       studentsWithOverdue,
       studentsWithPending,
-    });
+    };
+    
+    console.log('Global stats result:', result);
+    
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching global payment stats:', error);
     return NextResponse.json(

@@ -38,8 +38,10 @@ interface StudentData {
   name: string
   email: string
   phone: string
-  classe: string
+  classe?: string
   lycee: string
+  niveau: string
+  section: string
   groups: Array<{
     group: {
       id: string
@@ -448,8 +450,8 @@ export default function StudentDashboard() {
                     <GraduationCap className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-blue-600 uppercase tracking-wide">Classe</p>
-                    <p className="text-lg font-bold text-slate-800">{studentData.classe}</p>
+                    <p className="text-sm font-medium text-blue-600 uppercase tracking-wide">Niveau</p>
+                    <p className="text-lg font-bold text-slate-800">{studentData.niveau} {studentData.section}</p>
                   </div>
                 </div>
               </div>

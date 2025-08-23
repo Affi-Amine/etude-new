@@ -98,11 +98,16 @@ export async function GET(request: NextRequest) {
     // Calculate progress statistics
     const groupIds = student.groups.map(sg => sg.groupId)
     
-    // Get all sessions for student's groups
+    // Get all sessions for student's groups where attendance was recorded
     const allSessions = await prisma.session.findMany({
       where: {
         groupId: { in: groupIds },
-        status: 'COMPLETED'
+        // Only include sessions where attendance has been recorded for this student
+        attendance: {
+          some: {
+            studentId: student.id
+          }
+        }
       }
     })
 
@@ -175,9 +180,9 @@ export async function GET(request: NextRequest) {
         name: student.name,
         email: student.email,
         phone: student.phone,
-        classe: student.classe,
+        niveau: student.niveau,
+        section: student.section,
         lycee: student.lycee,
-        level: student.level,
         enrollmentDate: student.enrollmentDate
       },
       overallStats: {

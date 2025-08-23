@@ -8,7 +8,8 @@ const updateStudentSchema = z.object({
   name: z.string().min(1).optional(),
   email: z.string().email().optional(),
   phone: z.string().min(1).optional(),
-  classe: z.string().min(1).optional(),
+  niveau: z.string().min(1).optional(),
+  section: z.string().min(1).optional(),
   lycee: z.string().min(1).optional(),
   isActive: z.boolean().optional(),
 })

@@ -24,7 +24,8 @@ const createStudentSchema = z.object({
   name: z.string().min(1, 'Le nom est requis').max(100, 'Le nom est trop long'),
   email: z.string().email('Format d\'email invalide').min(1, 'L\'email est requis').max(255, 'L\'email est trop long'),
   phone: z.string().min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres').max(20, 'Le numéro de téléphone est trop long').regex(/^[+]?[0-9\s\-\(\)]+$/, 'Format de téléphone invalide'),
-  classe: z.string().min(1, 'La classe est requise').max(50, 'La classe est trop longue'),
+  niveau: z.string().min(1, 'Le niveau est requis').max(50, 'Le niveau est trop long'),
+  section: z.string().min(1, 'La section est requise').max(50, 'La section est trop longue'),
   lycee: z.string().min(1, 'Le lycée est requis').max(100, 'Le lycée est trop long'),
 })
 
@@ -123,7 +124,8 @@ export async function POST(request: NextRequest) {
       name: sanitizeInput(validatedData.name),
       email: validatedData.email.toLowerCase().trim(), // Email normalization
       phone: validatedData.phone.replace(/\s/g, ''), // Remove spaces from phone
-      classe: sanitizeInput(validatedData.classe),
+      niveau: sanitizeInput(validatedData.niveau),
+      section: sanitizeInput(validatedData.section),
       lycee: sanitizeInput(validatedData.lycee),
     }
 
@@ -174,7 +176,8 @@ export async function POST(request: NextRequest) {
          name: sanitizedData.name,
          email: sanitizedData.email,
          phone: sanitizedData.phone,
-         classe: sanitizedData.classe,
+         niveau: sanitizedData.niveau,
+         section: sanitizedData.section,
          lycee: sanitizedData.lycee,
          teacherId,
          enrollmentDate: new Date(),

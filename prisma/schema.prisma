@@ -39,9 +39,9 @@ model Student {
   name           String
   email          String         @unique // Required for student registration
   phone          String
-  classe         String
+  niveau         String
+  section        String
   lycee          String
-  level          String?
   familyCode     String?        @unique // For parent invitation system
   enrollmentDate DateTime?
   isActive       Boolean        @default(true)

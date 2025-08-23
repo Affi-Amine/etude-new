@@ -9,9 +9,9 @@ const studentRegisterSchema = z.object({
   email: z.string().email('Format d\'email invalide').min(1, 'L\'email est requis'),
   phone: z.string().min(8, 'Le numéro de téléphone doit contenir au moins 8 chiffres').max(15, 'Le numéro de téléphone ne peut pas dépasser 15 chiffres').regex(/^[0-9+\-\s()]+$/, 'Le numéro de téléphone contient des caractères invalides'),
   password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères').max(100, 'Le mot de passe ne peut pas dépasser 100 caractères'),
-  classe: z.string().min(1, 'La classe est requise').max(50, 'La classe ne peut pas dépasser 50 caractères'),
   lycee: z.string().min(1, 'Le lycée est requis').max(100, 'Le lycée ne peut pas dépasser 100 caractères'),
-  level: z.string().max(50, 'Le niveau ne peut pas dépasser 50 caractères').optional(),
+  niveau: z.string().min(1, 'Le niveau est requis').max(50, 'Le niveau ne peut pas dépasser 50 caractères'),
+  section: z.string().min(1, 'La section est requise').max(50, 'La section ne peut pas dépasser 50 caractères'),
 })
 
 // Function to sanitize input data
@@ -43,9 +43,9 @@ export async function POST(request: NextRequest) {
       email: validatedData.email.toLowerCase().trim(),
       phone: validatedData.phone.replace(/\s/g, ''), // Remove spaces
       password: validatedData.password, // Don't sanitize password
-      classe: sanitizeInput(validatedData.classe),
       lycee: sanitizeInput(validatedData.lycee),
-      level: validatedData.level ? sanitizeInput(validatedData.level) : ''
+      niveau: sanitizeInput(validatedData.niveau),
+      section: sanitizeInput(validatedData.section)
     }
 
     // Find and validate invitation
@@ -142,9 +142,9 @@ export async function POST(request: NextRequest) {
            name: sanitizedData.name,
            email: sanitizedData.email,
            phone: sanitizedData.phone,
-           classe: sanitizedData.classe,
            lycee: sanitizedData.lycee,
-           level: sanitizedData.level,
+           niveau: sanitizedData.niveau,
+           section: sanitizedData.section,
            enrollmentDate: new Date(),
          }
        })

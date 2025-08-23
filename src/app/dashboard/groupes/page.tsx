@@ -584,7 +584,7 @@ export default function GroupsPage() {
                           <Calendar className="h-4 w-4 mr-1" />
                           Sessions/mois
                         </span>
-                        <span className="font-medium">{group.paymentThreshold || 4}</span>
+                        <span className="font-medium">{group.paymentThreshold || 8}</span>
                       </div>
                       
                       <div className="flex items-center justify-between">
@@ -593,7 +593,7 @@ export default function GroupsPage() {
                           Prix mensuel
                         </span>
                         <span className="font-medium text-blue-600">
-                          {formatCurrency((group.sessionFee || 0) * (group.paymentThreshold || 4))}
+                          {formatCurrency((group.sessionFee || 0) * (group.paymentThreshold || 8))}
                         </span>
                       </div>
                     </div>

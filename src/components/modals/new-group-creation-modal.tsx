@@ -165,7 +165,9 @@ export default function NewGroupCreationModal({
       newStudents: []
     }
     
-    console.log('Submitting group data:', groupData)
+    console.log('🚀 Frontend: Submitting group data:', groupData)
+    console.log('🔍 Frontend: paymentThreshold value:', groupData.paymentThreshold, 'type:', typeof groupData.paymentThreshold)
+    console.log('🔍 Frontend: formData.paymentThreshold:', formData.paymentThreshold, 'type:', typeof formData.paymentThreshold)
     onSubmit(groupData)
     onClose()
     // Reset form

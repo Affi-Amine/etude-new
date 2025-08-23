@@ -19,16 +19,26 @@ export async function calculateStudentPaymentStatus(
   studentId: string,
   groupId: string
 ): Promise<PaymentCycleData> {
+  console.log(`Calculating payment status for student ${studentId} in group ${groupId}`);
+  
   // Récupérer les informations du groupe
   const group = await prisma.group.findUnique({
     where: { id: groupId },
     select: {
       sessionFee: true,
       paymentThreshold: true,
+      monthlyFee: true,
     },
   });
 
-  if (!group || !group.sessionFee || !group.paymentThreshold) {
+  // Déterminer le seuil et les frais de session avec fallback sur monthlyFee
+  const paymentThreshold = group?.paymentThreshold || 8;
+  let sessionFee: number | undefined = group?.sessionFee ?? undefined;
+  if ((!sessionFee || sessionFee <= 0) && group?.monthlyFee && paymentThreshold > 0) {
+    sessionFee = group.monthlyFee / paymentThreshold;
+  }
+
+  if (!group || !paymentThreshold || !sessionFee) {
     console.warn(`Configuration de paiement manquante pour le groupe ${groupId}`);
     // Return default status instead of throwing error
     return {
@@ -78,8 +88,6 @@ export async function calculateStudentPaymentStatus(
   });
 
   const totalAttendedSessions = attendances.length;
-  const paymentThreshold = group.paymentThreshold;
-  const sessionFee = group.sessionFee;
 
   // Calculer combien de cycles de paiement ont été complétés
   const completedPaymentCycles = payments.length;
@@ -89,6 +97,15 @@ export async function calculateStudentPaymentStatus(
   
   // Sessions restantes à payer dans le cycle actuel
   const unpaidSessions = totalAttendedSessions - paidSessions;
+  
+  console.log(`Payment calculation details:`, {
+    totalAttendedSessions,
+    completedPaymentCycles,
+    paidSessions,
+    unpaidSessions,
+    paymentThreshold,
+    sessionFee
+  });
   
   // Vérifier s'il existe des paiements en attente ou en retard
   const pendingPayments = await prisma.payment.findMany({
@@ -138,10 +155,18 @@ export async function calculateStudentPaymentStatus(
 
   // Calculer le montant dû basé sur les paiements en attente
   const totalPendingAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+  
+  console.log('Amount calculation:', {
+    totalPendingAmount,
+    unpaidSessions,
+    sessionFee,
+    calculatedAmount: unpaidSessions > 0 ? sessionFee * unpaidSessions : 0
+  });
+  
   const amountDue = totalPendingAmount > 0 ? totalPendingAmount : 
-    (unpaidSessions >= paymentThreshold ? sessionFee * paymentThreshold : 0);
+    (unpaidSessions > 0 ? sessionFee * unpaidSessions : 0);
 
-  return {
+  const result = {
     studentId,
     groupId,
     attendedSessions: totalAttendedSessions,
@@ -152,6 +177,10 @@ export async function calculateStudentPaymentStatus(
       new Date(Math.min(...pendingPayments.map(p => new Date(p.dueDate).getTime()))) : 
       (unpaidSessions >= paymentThreshold ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : undefined),
   };
+  
+  console.log(`Final payment status result:`, result);
+  
+  return result;
 }
 
 /**
@@ -167,10 +196,18 @@ export async function createPendingPaymentIfNeeded(
     select: {
       sessionFee: true,
       paymentThreshold: true,
+      monthlyFee: true,
     },
   });
 
-  if (!group || !group.sessionFee || !group.paymentThreshold) {
+  // Fallbacks
+  const paymentThreshold = group?.paymentThreshold || 8;
+  let sessionFee: number | undefined = group?.sessionFee ?? undefined;
+  if ((!sessionFee || sessionFee <= 0) && group?.monthlyFee && paymentThreshold > 0) {
+    sessionFee = group.monthlyFee / paymentThreshold;
+  }
+
+  if (!group || !paymentThreshold || !sessionFee) {
     return false;
   }
 
@@ -195,11 +232,11 @@ export async function createPendingPaymentIfNeeded(
   });
 
   const totalAttendedSessions = attendances.length;
-  const paidSessions = paidPayments.length * group.paymentThreshold;
+  const paidSessions = paidPayments.length * paymentThreshold;
   const unpaidSessions = totalAttendedSessions - paidSessions;
 
   // Si l'étudiant atteint le seuil et n'a pas de paiement en attente
-  if (unpaidSessions >= group.paymentThreshold) {
+  if (unpaidSessions >= paymentThreshold) {
     const existingPendingPayment = await prisma.payment.findFirst({
       where: {
         studentId,
@@ -217,11 +254,11 @@ export async function createPendingPaymentIfNeeded(
           studentId,
           groupId,
           teacherId,
-          amount: group.sessionFee * group.paymentThreshold,
+          amount: sessionFee * paymentThreshold,
           type: 'SESSION_FEE',
           status: 'PENDING',
           dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours
-          notes: `Paiement automatique - ${group.paymentThreshold} sessions`,
+          notes: `Paiement automatique - ${paymentThreshold} sessions`,
         },
       });
       return true;
@@ -244,10 +281,17 @@ export async function createInitialPendingPayment(
     select: {
       sessionFee: true,
       paymentThreshold: true,
+      monthlyFee: true,
     },
   });
 
-  if (!group || !group.sessionFee || !group.paymentThreshold) {
+  const paymentThreshold = group?.paymentThreshold || 8;
+  let sessionFee: number | undefined = group?.sessionFee ?? undefined;
+  if ((!sessionFee || sessionFee <= 0) && group?.monthlyFee && paymentThreshold > 0) {
+    sessionFee = group.monthlyFee / paymentThreshold;
+  }
+
+  if (!group || !paymentThreshold || !sessionFee) {
     console.warn(`Configuration de paiement manquante pour le groupe ${groupId}`);
     return; // Skip payment creation for groups without proper config
   }
@@ -270,11 +314,11 @@ export async function createInitialPendingPayment(
       studentId,
       groupId,
       teacherId,
-      amount: group.sessionFee * group.paymentThreshold,
+      amount: sessionFee * paymentThreshold,
       type: 'SESSION_FEE',
       status: 'PENDING',
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours
-      notes: `Paiement initial - ${group.paymentThreshold} sessions`,
+      notes: `Paiement initial - ${paymentThreshold} sessions`,
     },
   });
 }

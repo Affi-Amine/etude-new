@@ -86,7 +86,8 @@ export async function POST(
                 name: true,
                 email: true,
                 phone: true,
-                classe: true,
+                niveau: true,
+                section: true,
                 lycee: true,
               }
             }

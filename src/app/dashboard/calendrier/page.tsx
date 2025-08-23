@@ -39,7 +39,7 @@ const monthNames = [
 interface Session {
   id: string
   groupId: string
-  date: string
+  date: Date
   duration?: number
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED'
   notes?: string
@@ -54,11 +54,16 @@ interface Session {
   updatedAt: Date
   group: {
     id: string
+    teacherId: string
     name: string
     subject: string
-    scheduleDay: string
-    scheduleTime: string
-    scheduleDuration: number
+    isActive: boolean
+    createdAt: Date
+    sessionFee: number
+    paymentThreshold: number
+    scheduleDay?: string
+    scheduleTime?: string
+    scheduleDuration?: number
     weeklySchedule?: any
     _count?: {
       students: number
@@ -66,8 +71,11 @@ interface Session {
   }
   attendance: Array<{
     id: string
+    sessionId: string
     studentId: string
     present: boolean
+    notes?: string
+    createdAt: Date
     student: {
       id: string
       name: string
@@ -88,7 +96,8 @@ interface Group {
       name: string
       email?: string
       phone?: string
-      classe?: string
+      niveau?: string
+      section?: string
       lycee?: string
     }
   }>
