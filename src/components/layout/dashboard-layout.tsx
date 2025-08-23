@@ -44,12 +44,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: 'Tableau de bord', href: '/dashboard', icon: Home, current: pathname === '/dashboard' },
     { name: 'Calendrier', href: '/dashboard/calendrier', icon: Calendar, current: pathname === '/dashboard/calendrier' },
     { name: 'Groupes', href: '/dashboard/groupes', icon: Users, current: pathname === '/dashboard/groupes' },
-    { name: 'Étudiants', href: '/dashboard/etudiants', icon: User, current: pathname === '/dashboard/etudiants' },
-    { name: 'Cours', href: '/dashboard/cours', icon: BookOpen, current: pathname === '/dashboard/cours' },
-    { name: 'Présence', href: '/dashboard/presence', icon: UserCheck, current: pathname === '/dashboard/presence' },
     { name: 'Paiements', href: '/dashboard/paiements', icon: DollarSign, current: pathname === '/dashboard/paiements' },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, current: pathname === '/dashboard/analytics' },
-    { name: 'Notifications', href: '/dashboard/notifications', icon: Bell, current: pathname === '/dashboard/notifications' },
   ]
 
   const handleLogout = () => {
