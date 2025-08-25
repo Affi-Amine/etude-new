@@ -69,16 +69,25 @@ interface Session {
       students: number
     }
   }
-  attendance: Array<{
+  attendance?: Array<{
     id: string
     sessionId: string
     studentId: string
     present: boolean
     notes?: string
     createdAt: Date
-    student: {
+    student?: {
       id: string
       name: string
+      email?: string
+      phone: string
+      niveau: string
+      section: string
+      lycee: string
+      enrollmentDate?: Date
+      isActive: boolean
+      createdAt: Date
+      updatedAt?: Date
     }
   }>
 }
@@ -654,22 +663,7 @@ export default function CalendrierPage() {
                                 <BookOpen className="h-3 w-3 mr-1" />
                                 Contenu
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-xs px-2 py-1 text-blue-600 hover:text-blue-700"
-                                onClick={() => {
-                                  setSelectedSession(session)
-                                  setIsContentModalOpen(true)
-                                }}
-                              >
-                                <Settings className="h-3 w-3 mr-1" />
-                                Préparer
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-xs px-2 py-1">
-                                <Eye className="h-3 w-3 mr-1" />
-                                Voir
-                              </Button>
+
                               {session.status === 'SCHEDULED' && (
                                 <Button 
                                   variant="ghost" 
@@ -725,10 +719,7 @@ export default function CalendrierPage() {
                                 <DollarSign className="h-3 w-3 mr-1" />
                                 Paiements
                               </Button>
-                              <Button variant="ghost" size="sm" className="text-xs px-2 py-1">
-                                <Edit className="h-3 w-3 mr-1" />
-                                Modifier
-                              </Button>
+
                               <Button variant="ghost" size="sm" className="text-xs px-2 py-1 text-red-600 hover:text-red-700">
                                 <Trash2 className="h-3 w-3 mr-1" />
                                 Supprimer

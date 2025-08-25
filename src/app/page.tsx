@@ -159,28 +159,7 @@ export default function Home() {
               </span>
             </motion.div>
             
-            {/* Glass Navigation */}
-            <nav className="hidden md:flex items-center">
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-6 py-3 shadow-lg">
-                <div className="flex items-center space-x-6">
-                  <a href="#features" className="text-white/90 hover:text-white transition-all duration-300 text-sm font-medium hover:scale-105">
-                    Fonctionnalités
-                  </a>
-                  <a href="#solutions" className="text-white/90 hover:text-white transition-all duration-300 text-sm font-medium hover:scale-105">
-                    Solutions
-                  </a>
-                  <a href="#resources" className="text-white/90 hover:text-white transition-all duration-300 text-sm font-medium hover:scale-105">
-                    Ressources
-                  </a>
-                  <a href="#company" className="text-white/90 hover:text-white transition-all duration-300 text-sm font-medium hover:scale-105">
-                    Entreprise
-                  </a>
-                  <a href="#pricing" className="text-white/90 hover:text-white transition-all duration-300 text-sm font-medium hover:scale-105">
-                    Tarifs
-                  </a>
-                </div>
-              </div>
-            </nav>
+
             
             {/* CTA Buttons */}
             <div className="flex items-center space-x-4">
@@ -188,16 +167,25 @@ export default function Home() {
                 <Link href="/auth/connexion">
                   <Button 
                     variant="ghost" 
-                    className="text-white hover:bg-white/10 border-0 text-sm font-medium"
+                    className="text-white hover:bg-white/10 hover:text-white border-0 text-sm font-medium"
                   >
                     Professeur
+                  </Button>
+                </Link>
+                <span className="text-white/60">|</span>
+                <Link href="/student/login">
+                  <Button 
+                    variant="ghost" 
+                    className="text-white hover:bg-white/10 hover:text-white border-0 text-sm font-medium"
+                  >
+                    Étudiant
                   </Button>
                 </Link>
                 <span className="text-white/60">|</span>
                 <Link href="/parent/login">
                   <Button 
                     variant="ghost" 
-                    className="text-white hover:bg-white/10 border-0 text-sm font-medium"
+                    className="text-white hover:bg-white/10 hover:text-white border-0 text-sm font-medium"
                   >
                     Parent
                   </Button>
@@ -246,15 +234,7 @@ export default function Home() {
               className="text-center lg:text-left"
             >
               {/* Badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-8 border border-white/20"
-              >
-                <Sparkles className="h-4 w-4 text-white mr-2" />
-                <span className="text-white/90 font-medium text-sm">Plateforme éducative nouvelle génération</span>
-              </motion.div>
+
               
               {/* Main Headline */}
               <motion.h1 
@@ -293,7 +273,7 @@ export default function Home() {
                   </Button>
                 </Link>
                 <Link href="#demo">
-                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8 py-3 text-lg font-semibold rounded-lg backdrop-blur-sm w-full sm:w-auto">
+                  <Button variant="outline" className="border-white/30 text-black hover:bg-white/10 hover:text-purple-700 hover:text-white px-8 py-3 text-lg font-semibold rounded-lg backdrop-blur-sm w-full sm:w-auto">
                     Voir la démo
                   </Button>
                 </Link>
@@ -448,409 +428,24 @@ export default function Home() {
              className="text-center mb-12"
            >
              <p className="text-white/60 text-sm font-medium mb-8">Utilisé par les meilleures institutions éducatives</p>
-             <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
+             <div className="flex flex-wrap justify-center items-center gap-8">
                {/* Logo placeholders */}
-               <div className="bg-white/10 rounded-lg px-6 py-3">
-                 <span className="text-white/80 font-semibold">UNIVERSITÉ</span>
+               <div className="bg-white/20 rounded-xl px-8 py-4 shadow-lg backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
+                 <span className="text-white font-bold text-lg">UNIVERSITÉ</span>
                </div>
-               <div className="bg-white/10 rounded-lg px-6 py-3">
-                 <span className="text-white/80 font-semibold">LYCÉE</span>
+               <div className="bg-white/20 rounded-xl px-8 py-4 shadow-lg backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
+                 <span className="text-white font-bold text-lg">LYCÉE</span>
                </div>
-               <div className="bg-white/10 rounded-lg px-6 py-3">
-                 <span className="text-white/80 font-semibold">COLLÈGE</span>
+               <div className="bg-white/20 rounded-xl px-8 py-4 shadow-lg backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
+                 <span className="text-white font-bold text-lg">COLLÈGE</span>
                </div>
-               <div className="bg-white/10 rounded-lg px-6 py-3">
-                 <span className="text-white/80 font-semibold">INSTITUT</span>
+               <div className="bg-white/20 rounded-xl px-8 py-4 shadow-lg backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
+                 <span className="text-white font-bold text-lg">INSTITUT</span>
                </div>
              </div>
            </motion.div>
          </div>
        </section>
-
-          {/* Features Preview Section */}
-          <section className="py-8 relative" style={{backgroundColor: '#64349A'}}>
-  
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-                className="text-center mb-16"
-              >
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                  className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-md rounded-full mb-6 border border-white/20"
-                >
-                  <Zap className="h-4 w-4 text-yellow-400 mr-2" />
-                  <span className="text-white/90 font-medium text-sm">Fonctionnalités Avancées</span>
-                </motion.div>
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-                  Fonctionnalités qui transforment
-                  <br />
-                  <span className="text-purple-200">
-                    l'éducation
-                  </span>
-                </h2>
-                <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                  Découvrez comment LessonPro révolutionne l'expérience éducative pour tous
-                </p>
-              </motion.div>
-            </div>
-          </section>
-
-        {/* Trusted Partners Section */}
-        <section className="py-8" style={{backgroundColor: '#64349A'}}>
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <p className="text-gray-300 text-sm font-medium mb-8">Utilisé par plus de 10,000 enseignants dans le monde</p>
-              <div className="flex flex-wrap justify-center items-center gap-8">
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="text-2xl font-bold text-white/60 hover:text-white/80 transition-colors duration-300"
-                >
-                  SOPHOS
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="text-2xl font-bold text-white/60 hover:text-white/80 transition-colors duration-300"
-                >
-                  Sprinklr
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="text-2xl font-bold text-white/60 hover:text-white/80 transition-colors duration-300"
-                >
-                  CANON
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="text-2xl font-bold text-white/60 hover:text-white/80 transition-colors duration-300"
-                >
-                  Clarity
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="text-2xl font-bold text-white/60 hover:text-white/80 transition-colors duration-300"
-                >
-                  coinbase
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="text-2xl font-bold text-white/60 hover:text-white/80 transition-colors duration-300"
-                >
-                  databricks
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="text-2xl font-bold text-white/60 hover:text-white/80 transition-colors duration-300"
-                >
-                  Dropbox
-                </motion.div>
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  className="text-2xl font-bold text-white/60 hover:text-white/80 transition-colors duration-300"
-                >
-                  GitLab
-                </motion.div>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-      {/* Advanced Interactive Platform Showcase */}
-      <section className="py-8 relative overflow-hidden" style={{backgroundColor: '#64349A'}}>
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0">
-          <motion.div
-            animate={{
-              rotate: [0, 360],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "linear"
-            }}
-            className="absolute top-20 left-20 w-96 h-96 bg-white/5 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              rotate: [360, 0],
-              scale: [1.2, 1, 1.2],
-            }}
-            transition={{
-              duration: 25,
-              repeat: Infinity,
-              ease: "linear"
-            }}
-            className="absolute bottom-20 right-20 w-80 h-80 bg-white/5 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              y: [-20, 20, -20],
-              x: [20, -20, 20],
-            }}
-            transition={{
-              duration: 15,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/5 rounded-full blur-2xl"
-          />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Section Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-20"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-full mb-8 border border-white/20"
-            >
-              <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-              >
-                <Sparkles className="h-5 w-5 text-yellow-400 mr-3" />
-              </motion.div>
-              <span className="text-white font-medium text-lg">Plateforme Révolutionnaire</span>
-            </motion.div>
-            
-            <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-5xl lg:text-7xl font-bold text-white mb-8 leading-tight"
-            >
-              Une plateforme
-              <br />
-              <span className="text-purple-200">
-                complète
-              </span>
-            </motion.h2>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="text-xl lg:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-12"
-            >
-              Découvrez l'avenir de l'éducation avec des outils avancés et une expérience utilisateur exceptionnelle
-            </motion.p>
-          </motion.div>
-
-          {/* Interactive Glass Cards Grid */}
-          <div className="grid lg:grid-cols-3 gap-8 mb-20">
-            {/* Card 1 - Analytics */}
-            <motion.div
-              initial={{ opacity: 0, y: 40, rotateY: -15 }}
-              whileInView={{ opacity: 1, y: 0, rotateY: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              whileHover={{ 
-                scale: 1.05, 
-                rotateY: 5,
-                transition: { duration: 0.3 }
-              }}
-              className="group relative"
-            >
-              <div className="absolute inset-0 bg-white/5 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500" />
-              <div className="relative bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 hover:border-white/40 transition-all duration-500">
-                <motion.div
-                  whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
-                  className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg"
-                >
-                  <BarChart3 className="h-8 w-8 text-white" />
-                </motion.div>
-                <h3 className="text-2xl font-bold text-white mb-4">Analytics Avancées</h3>
-                <p className="text-gray-300 leading-relaxed mb-6">
-                  Tableaux de bord interactifs avec visualisations en temps réel pour optimiser vos performances.
-                </p>
-                <motion.div
-                  whileHover={{ x: 5 }}
-                  className="flex items-center text-cyan-400 font-medium cursor-pointer"
-                >
-                  <span>Explorer</span>
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </motion.div>
-              </div>
-            </motion.div>
-
-            {/* Card 2 - Collaboration */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              whileHover={{ 
-                scale: 1.05,
-                transition: { duration: 0.3 }
-              }}
-              className="group relative"
-            >
-              <div className="absolute inset-0 bg-white/5 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500" />
-              <div className="relative bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 hover:border-white/40 transition-all duration-500">
-                <motion.div
-                  whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
-                  className="w-16 h-16 bg-purple-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg"
-                >
-                  <Users className="h-8 w-8 text-white" />
-                </motion.div>
-                <h3 className="text-2xl font-bold text-white mb-4">Collaboration Intelligente</h3>
-                <p className="text-gray-300 leading-relaxed mb-6">
-                  Outils collaboratifs avancés pour connecter enseignants, étudiants et parents efficacement.
-                </p>
-                <motion.div
-                  whileHover={{ x: 5 }}
-                  className="flex items-center text-pink-400 font-medium cursor-pointer"
-                >
-                  <span>Découvrir</span>
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </motion.div>
-              </div>
-            </motion.div>
-
-            {/* Card 3 - Security */}
-            <motion.div
-              initial={{ opacity: 0, y: 40, rotateY: 15 }}
-              whileInView={{ opacity: 1, y: 0, rotateY: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              whileHover={{ 
-                scale: 1.05, 
-                rotateY: -5,
-                transition: { duration: 0.3 }
-              }}
-              className="group relative"
-            >
-              <div className="absolute inset-0 bg-white/5 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-500" />
-              <div className="relative bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 hover:border-white/40 transition-all duration-500">
-                <motion.div
-                  whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
-                  transition={{ duration: 0.6 }}
-                  className="w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg"
-                >
-                  <Shield className="h-8 w-8 text-white" />
-                </motion.div>
-                <h3 className="text-2xl font-bold text-white mb-4">Sécurité Maximale</h3>
-                <p className="text-gray-300 leading-relaxed mb-6">
-                  Protection des données avec chiffrement de bout en bout et conformité RGPD complète.
-                </p>
-                <motion.div
-                  whileHover={{ x: 5 }}
-                  className="flex items-center text-emerald-400 font-medium cursor-pointer"
-                >
-                  <span>En savoir plus</span>
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </motion.div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Interactive Stats Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="relative"
-          >
-            <div className="absolute inset-0 bg-white/5 rounded-3xl blur-2xl" />
-            <div className="relative bg-white/5 backdrop-blur-md rounded-3xl p-8 border border-white/10">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-                {stats.map((stat, index) => {
-                  const Icon = stat.icon
-                  return (
-                    <motion.div
-                      key={stat.label}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.6, delay: 0.9 + index * 0.1 }}
-                      whileHover={{ 
-                        scale: 1.1,
-                        transition: { duration: 0.2 }
-                      }}
-                      className="text-center group cursor-pointer"
-                    >
-                      <motion.div
-                        whileHover={{ rotate: [0, -5, 5, 0] }}
-                        className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:shadow-lg transition-all duration-300"
-                      >
-                        <Icon className="h-6 w-6 text-white" />
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        transition={{ duration: 1, delay: 1 + index * 0.1 }}
-                        className="text-3xl lg:text-4xl font-bold text-white mb-2"
-                      >
-                        {stat.number}
-                      </motion.div>
-                      <div className="text-gray-300 text-sm lg:text-base">{stat.label}</div>
-                    </motion.div>
-                  )
-                })}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Call to Action */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.2 }}
-            className="text-center mt-16"
-          >
-            <Link href="/auth/inscription">
-              <motion.div
-                whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: "0 20px 40px rgba(139, 92, 246, 0.3)"
-                }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-block"
-              >
-                <Button className="bg-purple-600 hover:bg-purple-700 text-white text-lg px-12 py-6 rounded-2xl shadow-2xl border-0 font-semibold">
-                  <motion.span
-                    animate={{ 
-                      backgroundPosition: ['0%', '100%', '0%']
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "linear"
-                    }}
-                    className="text-white"
-                  >
-                    Commencer maintenant
-                  </motion.span>
-                  <motion.div
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                    className="ml-3"
-                  >
-                    <ArrowRight className="h-5 w-5" />
-                  </motion.div>
-                </Button>
-              </motion.div>
-            </Link>
-          </motion.div>
-        </div>
-      </section>
 
       {/* Revolutionary Process Section */}
       <section className="py-8 relative overflow-hidden" style={{backgroundColor: '#64349A'}}>
@@ -992,15 +587,15 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-20"
           >
-            <div className="inline-flex items-center px-4 py-2 bg-slate-800/20 backdrop-blur-sm rounded-full mb-6">
-              <Star className="h-4 w-4 text-slate-700 mr-2" />
-              <span className="text-slate-700 font-medium text-sm">Témoignages authentiques</span>
+            <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6">
+              <Star className="h-4 w-4 text-yellow-400 mr-2" />
+              <span className="text-white font-medium text-sm">Témoignages authentiques</span>
             </div>
-            <h2 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            <h2 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight">
               Ce que dit notre
-              <span className="text-gray-300"> communauté</span>
+              <span className="text-yellow-300"> communauté</span>
             </h2>
-            <p className="text-xl lg:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl lg:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
               Rejoignez des milliers d'enseignants, étudiants et parents qui transforment leur expérience éducative
             </p>
           </motion.div>
@@ -1316,7 +911,7 @@ export default function Home() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Button variant="outline" className="border-2 border-white/30 text-white hover:bg-white hover:text-slate-900 text-lg px-8 py-4 rounded-xl font-semibold backdrop-blur-sm transition-all duration-300">
+                  <Button variant="outline" className="border-2 border-white/30 text-black hover:bg-white/10 hover:text-white text-lg px-8 py-4 rounded-xl font-semibold backdrop-blur-sm transition-all duration-300">
                     Étudiants - Se connecter
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
