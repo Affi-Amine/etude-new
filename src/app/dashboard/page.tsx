@@ -408,48 +408,7 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="mt-8"
-        >
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Plus className="h-5 w-5 mr-2" />
-                Actions rapides
-              </CardTitle>
-              <CardDescription>
-                Accédez rapidement aux fonctionnalités principales
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {quickActions.map((action, index) => {
-                  const Icon = action.icon
-                  return (
-                    <Link key={action.title} href={action.href}>
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 + index * 0.1 }}
-                        className="p-4 rounded-xl border border-gray-200 hover:border-transparent hover:shadow-xl transition-all duration-300 cursor-pointer group"
-                      >
-                        <div className={`w-12 h-12 rounded-lg ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                          <Icon className="h-6 w-6 text-white" />
-                        </div>
-                        <h3 className="font-semibold text-gray-900 mb-1">{action.title}</h3>
-                        <p className="text-sm text-gray-600">{action.description}</p>
-                      </motion.div>
-                    </Link>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+
 
         {/* Today's Sessions & Groups Overview */}
         <div className="grid lg:grid-cols-2 gap-6 mt-8">
@@ -487,9 +446,9 @@ export default function DashboardPage() {
                               <p className="font-medium text-gray-900">{session.group?.name}</p>
                               <div className="flex items-center text-sm text-gray-600 mt-1">
                                 <Clock className="h-4 w-4 mr-1" />
-                                {session.group?.schedule?.time || 'N/A'}
+                                {getFirstScheduleTime(session.group?.weeklySchedule) || formatTime(session.date)}
                                 <Users className="h-4 w-4 ml-3 mr-1" />
-                                {session.attendances?.length || 0} étudiants
+                                {dashboardData.groups.find(g => g.id === session.groupId)?.students?.length || 0} étudiants
                               </div>
                             </div>
                             <div className="text-right">
