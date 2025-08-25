@@ -118,13 +118,14 @@ export async function calculateStudentPaymentStatus(
     },
   });
 
-  // Déterminer le statut
+  // Déterminer le statut selon les nouvelles règles
   let currentStatus: 'EN_ATTENTE' | 'EN_RETARD' | 'A_JOUR';
   
-  if (unpaidSessions === 0) {
+  if (unpaidSessions < paymentThreshold) {
+    // Sous le seuil : statut A_JOUR
     currentStatus = 'A_JOUR';
-  } else if (unpaidSessions >= paymentThreshold) {
-    // Si l'étudiant atteint le seuil, vérifier s'il y a déjà un paiement
+  } else if (unpaidSessions === paymentThreshold) {
+    // Exactement au seuil : statut EN_ATTENTE
     const overduePayment = pendingPayments.find(p => p.status === 'OVERDUE');
     const pendingPayment = pendingPayments.find(p => p.status === 'PENDING');
     
@@ -150,21 +151,30 @@ export async function calculateStudentPaymentStatus(
       currentStatus = 'EN_ATTENTE';
     }
   } else {
-    currentStatus = 'EN_ATTENTE';
+    // Dépassé le seuil : statut EN_RETARD
+    currentStatus = 'EN_RETARD';
   }
 
-  // Calculer le montant dû basé sur les paiements en attente
+  // Calculer le montant dû basé sur le statut et les paiements en attente
   const totalPendingAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
   
   console.log('Amount calculation:', {
+    currentStatus,
     totalPendingAmount,
     unpaidSessions,
     sessionFee,
-    calculatedAmount: unpaidSessions > 0 ? sessionFee * unpaidSessions : 0
+    paymentThreshold
   });
   
-  const amountDue = totalPendingAmount > 0 ? totalPendingAmount : 
-    (unpaidSessions > 0 ? sessionFee * unpaidSessions : 0);
+  // Si l'étudiant est A_JOUR (sous le seuil), il n'a pas de montant dû
+  let amountDue = 0;
+  if (currentStatus === 'A_JOUR') {
+    amountDue = 0;
+  } else {
+    // Pour EN_ATTENTE et EN_RETARD, utiliser les paiements en attente ou calculer le montant
+    amountDue = totalPendingAmount > 0 ? totalPendingAmount : 
+      (unpaidSessions >= paymentThreshold ? sessionFee * paymentThreshold : 0);
+  }
 
   const result = {
     studentId,

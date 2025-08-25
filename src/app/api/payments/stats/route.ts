@@ -74,23 +74,14 @@ export async function GET(request: NextRequest) {
       .filter((p) => p.status === 'PAID')
       .reduce((sum, p) => sum + p.amount, 0) || 0;
 
-    const pendingAmount = payments
-      .filter((p) => p.status === 'PENDING')
-      .reduce((sum, p) => sum + p.amount, 0) || 0;
-
-    const overdueAmount = payments
-      .filter((p) => p.status === 'OVERDUE')
-      .reduce((sum, p) => sum + p.amount, 0) || 0;
-
-    const totalExpected = payments.reduce((sum, p) => sum + p.amount, 0) || 0;
-    const collectionRate = totalExpected > 0 ? (totalRevenue / totalExpected) * 100 : 0;
-
     const totalStudents = group.students.length;
     
-    // Calculate student statuses using the new logic
+    // Calculate student statuses and amounts using the new logic
     let studentsUpToDate = 0;
     let studentsWithOverdue = 0;
     let studentsWithPending = 0;
+    let totalPendingAmount = 0;
+    let totalOverdueAmount = 0;
 
     for (const groupStudent of group.students) {
       try {
@@ -105,9 +96,11 @@ export async function GET(request: NextRequest) {
             break;
           case 'EN_RETARD':
             studentsWithOverdue++;
+            totalOverdueAmount += paymentData.amountDue;
             break;
           case 'EN_ATTENTE':
             studentsWithPending++;
+            totalPendingAmount += paymentData.amountDue;
             break;
         }
       } catch (error) {
@@ -117,10 +110,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const totalExpected = totalRevenue + totalPendingAmount + totalOverdueAmount;
+    const collectionRate = totalExpected > 0 ? (totalRevenue / totalExpected) * 100 : 0;
+
     return NextResponse.json({
       totalRevenue,
-      pendingAmount,
-      overdueAmount,
+      pendingAmount: totalPendingAmount,
+      overdueAmount: totalOverdueAmount,
       collectionRate: Math.round(collectionRate * 100) / 100,
       totalStudents,
       studentsUpToDate,

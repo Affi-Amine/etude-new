@@ -72,21 +72,9 @@ export async function GET(request: NextRequest) {
     )
 
     // Get students needing payment
-    console.log('=== DEBUGGING STUDENTS NEEDING PAYMENT ===')
-    console.log('Total students with payment status:', studentsWithPaymentStatus.length)
-    studentsWithPaymentStatus.forEach((s: any, index: number) => {
-      console.log(`Student ${index + 1}: ${s.name}, paymentStatus:`, s.paymentStatus)
-    })
-    
     const studentsNeedingPayment = studentsWithPaymentStatus.filter(
       (s: any) => s.paymentStatus && ['EN_ATTENTE', 'EN_RETARD'].includes(s.paymentStatus.currentStatus)
     )
-    
-    console.log('Students needing payment count:', studentsNeedingPayment.length)
-    studentsNeedingPayment.forEach((s: any, index: number) => {
-      console.log(`Student needing payment ${index + 1}: ${s.name}, status: ${s.paymentStatus.currentStatus}, amount: ${s.paymentStatus.amountDue}`)
-    })
-    console.log('=== END DEBUGGING STUDENTS NEEDING PAYMENT ===')
 
     // Get sessions for current month
     const now = new Date()

@@ -90,11 +90,11 @@ export async function GET(request: NextRequest) {
             studentId: groupStudent.student.id,
             studentName: groupStudent.student.name,
             paymentStatus: mapPaymentStatusToDisplay(paymentData.currentStatus),
-            totalDue: pendingAmount + overdueAmount,
+            totalDue: paymentData.amountDue, // Use calculated amount from payment logic
             totalPaid: totalPaid || 0,
             overdueAmount: overdueAmount || 0,
             attendedSessions: paymentData.attendedSessions,
-            sessionsInCurrentCycle: paymentData.totalSessionsInCycle,
+            sessionsInCurrentCycle: group.paymentThreshold || 8, // Use payment threshold instead of unpaid sessions
             nextDueDate: nextDuePayment?.dueDate || paymentData.nextDueDate || null,
             lastPaymentDate: lastPaidPayment?.paidDate
           }
@@ -105,11 +105,11 @@ export async function GET(request: NextRequest) {
             studentId: groupStudent.student.id,
             studentName: groupStudent.student.name,
             paymentStatus: 'EN ATTENTE',
-            totalDue: 0,
+            totalDue: 0, // Default to 0 for error cases
             totalPaid: 0,
             overdueAmount: 0,
             attendedSessions: 0,
-            sessionsInCurrentCycle: 0,
+            sessionsInCurrentCycle: group.paymentThreshold || 8, // Use payment threshold instead of 0
             nextDueDate: null,
             lastPaymentDate: null
           }
